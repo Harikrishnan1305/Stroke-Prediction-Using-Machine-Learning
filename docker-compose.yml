@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: stroke_db
+    environment:
+      POSTGRES_USER: stroke_user
+      POSTGRES_PASSWORD: stroke_password
+      POSTGRES_DB: stroke_prediction
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stroke_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - stroke_network
+
+  # Redis Cache (Optional)
+  redis:
+    image: redis:7-alpine
+    container_name: stroke_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - stroke_network
+
+  # Backend + Frontend Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stroke_app
+    environment:
+      - DATABASE_URL=postgresql://stroke_user:stroke_password@postgres:5432/stroke_prediction
+      - SECRET_KEY=your-secret-key-here-change-in-production
+      - JWT_SECRET_KEY=your-jwt-secret-key-here-change-in-production
+      - FLASK_ENV=production
+      - UPLOAD_FOLDER=/app/uploads
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/models:/app/models
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - stroke_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  stroke_network:
+    driver: bridge
