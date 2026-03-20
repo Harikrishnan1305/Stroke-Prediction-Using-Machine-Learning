@@ -1,13 +1,417 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/brain-icon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Brain Stroke Risk Prediction System</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stroke Prediction System — ML &amp; DL Powered</title>
+  <meta name="description" content="AI-powered stroke risk prediction using Machine Learning and Deep Learning on patient health data and MRI brain scans." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- Toast Container -->
+<div id="toast-container" class="toast-container"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SCREEN 1: INTRODUCTION / LANDING PAGE
+     ═══════════════════════════════════════════════════════════════ -->
+<div id="intro-screen" class="screen active">
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- Navbar -->
+  <nav class="intro-nav">
+    <div class="intro-nav-brand">
+      <svg viewBox="0 0 40 40" fill="none" class="nav-logo"><circle cx="20" cy="20" r="18" stroke="url(#gNav)" stroke-width="2.5"/><path d="M12 20 Q16 12 20 20 Q24 28 28 20" stroke="url(#gNav)" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="20" r="3" fill="url(#gNav)"/><defs><linearGradient id="gNav" x1="0" y1="0" x2="40" y2="40"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs></svg>
+      <span>Stroke Prediction System</span>
+    </div>
+    <div class="intro-nav-links">
+      <a href="#features">Features</a>
+      <a href="#how-it-works">How It Works</a>
+      <a href="#technology">Technology</a>
+      <a href="#about">About</a>
+      <button class="btn btn-primary btn-sm" id="go-login-btn">Sign In &rarr;</button>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">&#129504; AI-Powered Medical System</div>
+      <h1 class="hero-title">
+        <span class="gradient-text">Stroke Prediction</span><br/>
+        Using Machine Learning<br/>
+        &amp; Deep Learning
+      </h1>
+      <p class="hero-desc">
+        An intelligent clinical decision support system that combines <strong>Random Forest ML models</strong>
+        on patient vital signs with <strong>EfficientNetB0 deep learning</strong> on brain MRI scans
+        to predict stroke risk with high accuracy and AI-explainable Grad-CAM heatmaps.
+      </p>
+      <div class="hero-actions">
+        <button class="btn btn-primary btn-xl" id="hero-signin-btn">Get Started &rarr;</button>
+        <a href="#how-it-works" class="btn btn-outline btn-xl">Learn More</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><span class="hero-stat-val">93%+</span><span class="hero-stat-label">ML Accuracy</span></div>
+        <div class="hero-stat"><span class="hero-stat-val">9</span><span class="hero-stat-label">Health Parameters</span></div>
+        <div class="hero-stat"><span class="hero-stat-val">2</span><span class="hero-stat-label">AI Models Combined</span></div>
+        <div class="hero-stat"><span class="hero-stat-val">Grad-CAM</span><span class="hero-stat-label">Explainability</span></div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="brain-visual glass">
+        <svg viewBox="0 0 200 200" fill="none" class="brain-svg">
+          <circle cx="100" cy="100" r="85" stroke="url(#gBrain)" stroke-width="1.5" opacity="0.3"/>
+          <circle cx="100" cy="100" r="65" stroke="url(#gBrain)" stroke-width="1" opacity="0.2"/>
+          <circle cx="100" cy="100" r="45" stroke="url(#gBrain)" stroke-width="0.7" opacity="0.15"/>
+          <path d="M60 100 Q70 65 100 60 Q130 65 140 100 Q130 135 100 140 Q70 135 60 100Z" stroke="url(#gBrain)" stroke-width="2" fill="none" opacity="0.6"/>
+          <path d="M80 80 Q100 70 120 80 M80 120 Q100 130 120 120" stroke="url(#gBrain)" stroke-width="1.5" fill="none" opacity="0.4"/>
+          <circle cx="100" cy="100" r="8" fill="url(#gBrain)" opacity="0.5"/>
+          <circle cx="100" cy="100" r="3" fill="#00d4ff"/>
+          <!-- Pulse rings -->
+          <circle cx="100" cy="100" r="20" stroke="#00d4ff" stroke-width="0.5" opacity="0.3" class="pulse-ring"/>
+          <circle cx="100" cy="100" r="35" stroke="#7c3aed" stroke-width="0.5" opacity="0.2" class="pulse-ring" style="animation-delay:0.5s"/>
+          <defs><linearGradient id="gBrain" x1="0" y1="0" x2="200" y2="200"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs>
+        </svg>
+        <div class="visual-labels">
+          <span class="vlabel vlabel-1">MRI Scan Analysis</span>
+          <span class="vlabel vlabel-2">ML Prediction</span>
+          <span class="vlabel vlabel-3">Risk Assessment</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="intro-section" id="features">
+    <h2 class="section-title">Key Features</h2>
+    <p class="section-subtitle">Everything you need for comprehensive stroke risk assessment</p>
+    <div class="features-grid">
+      <div class="feature-card glass">
+        <div class="fc-icon icon-blue"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+        <h3>ML Prediction</h3>
+        <p>Random Forest model trained on 9 clinical parameters including blood pressure, heart rate, cholesterol, BMI, and lifestyle factors.</p>
+      </div>
+      <div class="feature-card glass">
+        <div class="fc-icon icon-purple"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg></div>
+        <h3>MRI Brain Scan Analysis</h3>
+        <p>EfficientNetB0 deep learning model analyses brain MRI scans to detect stroke patterns with transfer learning from ImageNet.</p>
+      </div>
+      <div class="feature-card glass">
+        <div class="fc-icon icon-teal"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg></div>
+        <h3>Grad-CAM Explainability</h3>
+        <p>AI-generated heatmaps showing exactly which regions of the brain MRI the model focused on to make its prediction.</p>
+      </div>
+      <div class="feature-card glass">
+        <div class="fc-icon" style="background:rgba(236,72,153,0.2);color:#ec4899"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/></svg></div>
+        <h3>Combined AI Scoring</h3>
+        <p>Weighted combination of ML (40%) and DL (60%) predictions for more accurate risk assessment when MRI data is available.</p>
+      </div>
+      <div class="feature-card glass">
+        <div class="fc-icon" style="background:rgba(245,158,11,0.2);color:#f59e0b"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg></div>
+        <h3>Clinical Recommendations</h3>
+        <p>Automatic generation of personalized medical recommendations based on patient parameters and predicted risk level.</p>
+      </div>
+      <div class="feature-card glass">
+        <div class="fc-icon" style="background:rgba(16,185,129,0.2);color:#10b981"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/></svg></div>
+        <h3>Analytics Dashboard</h3>
+        <p>Real-time statistics, risk distribution charts, patient history tracking, and comprehensive prediction analytics.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it Works -->
+  <section class="intro-section" id="how-it-works">
+    <h2 class="section-title">How It Works</h2>
+    <p class="section-subtitle">A simple 4-step process for comprehensive stroke risk analysis</p>
+    <div class="steps-row">
+      <div class="step-card glass">
+        <div class="step-num">1</div>
+        <h3>Enter Patient Data</h3>
+        <p>Input 9 clinical parameters: age, blood pressure, heart rate, blood sugar, cholesterol, BMI, and lifestyle factors.</p>
+      </div>
+      <div class="step-arrow">&rarr;</div>
+      <div class="step-card glass">
+        <div class="step-num">2</div>
+        <h3>Upload MRI Scan</h3>
+        <p>Optionally upload a brain MRI image for deep learning analysis (the system works with tabular data alone too).</p>
+      </div>
+      <div class="step-arrow">&rarr;</div>
+      <div class="step-card glass">
+        <div class="step-num">3</div>
+        <h3>AI Analysis</h3>
+        <p>ML model analyses vital signs while DL model processes the MRI scan. Results are combined for higher accuracy.</p>
+      </div>
+      <div class="step-arrow">&rarr;</div>
+      <div class="step-card glass">
+        <div class="step-num">4</div>
+        <h3>View Results</h3>
+        <p>Get risk level (Low/Medium/High), Grad-CAM heatmap, feature importance chart, and personalized recommendations.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Technology -->
+  <section class="intro-section" id="technology">
+    <h2 class="section-title">Technology Stack</h2>
+    <p class="section-subtitle">Built with industry-standard frameworks and libraries</p>
+    <div class="tech-grid">
+      <div class="tech-item glass"><strong>Python + Flask</strong><span>Backend API</span></div>
+      <div class="tech-item glass"><strong>TensorFlow / Keras</strong><span>Deep Learning</span></div>
+      <div class="tech-item glass"><strong>Scikit-Learn</strong><span>Machine Learning</span></div>
+      <div class="tech-item glass"><strong>EfficientNetB0</strong><span>Transfer Learning</span></div>
+      <div class="tech-item glass"><strong>Random Forest</strong><span>ML Classifier</span></div>
+      <div class="tech-item glass"><strong>Grad-CAM</strong><span>AI Explainability</span></div>
+      <div class="tech-item glass"><strong>SQLite / SQLAlchemy</strong><span>Database</span></div>
+      <div class="tech-item glass"><strong>JWT Authentication</strong><span>Security</span></div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section class="intro-section" id="about">
+    <h2 class="section-title">About This Project</h2>
+    <div class="about-card glass">
+      <p>This <strong>Stroke Prediction System</strong> is an academic and research project that demonstrates the combined use of <strong>Machine Learning</strong> and <strong>Deep Learning</strong> for clinical decision support in stroke risk assessment.</p>
+      <p>The system uses a trained <strong>Random Forest</strong> classifier on tabular patient data and an <strong>EfficientNetB0</strong> CNN with transfer learning on brain MRI images. Both models' predictions are combined using a weighted averaging approach to provide a comprehensive risk score.</p>
+      <p class="about-disclaimer"><strong>Disclaimer:</strong> This is a research/educational tool and should NOT be used for actual medical diagnosis. Always consult qualified healthcare professionals.</p>
+    </div>
+    <div class="about-cta">
+      <button class="btn btn-primary btn-xl" id="about-signin-btn">Start Using the System &rarr;</button>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="intro-footer">
+    <p>Stroke Prediction System &copy; 2025 &bull; Machine Learning &amp; Deep Learning Project</p>
+  </footer>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SCREEN 2: AUTH (Login / Register / Forgot Password)
+     ═══════════════════════════════════════════════════════════════ -->
+<div id="login-screen" class="screen hidden">
+  <div class="login-bg"></div>
+  <div class="login-orb orb-1"></div>
+  <div class="login-orb orb-2"></div>
+  <div class="login-orb orb-3"></div>
+
+  <div class="auth-wrapper">
+    <!-- Left panel — branding -->
+    <div class="auth-brand-panel">
+      <div class="auth-brand-content">
+        <div class="brand-icon pulse-glow">
+          <svg viewBox="0 0 50 50" fill="none"><circle cx="25" cy="25" r="22" stroke="url(#gAuth)" stroke-width="2.5"/><path d="M14 25 Q19 14 25 25 Q31 36 36 25" stroke="url(#gAuth)" stroke-width="2.5" stroke-linecap="round"/><circle cx="25" cy="25" r="4" fill="url(#gAuth)"/><defs><linearGradient id="gAuth" x1="0" y1="0" x2="50" y2="50"><stop offset="0%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#ef4444"/></linearGradient></defs></svg>
+        </div>
+        <h1 class="auth-brand-title">Stroke Prediction<br/>System</h1>
+        <p class="auth-brand-desc">Advanced AI-powered clinical decision support using ML &amp; Deep Learning</p>
+        <div class="auth-features">
+          <div class="auth-feat"><span class="auth-feat-icon">&#129504;</span><span>ML + DL Combined Analysis</span></div>
+          <div class="auth-feat"><span class="auth-feat-icon">&#128200;</span><span>93%+ Prediction Accuracy</span></div>
+          <div class="auth-feat"><span class="auth-feat-icon">&#128270;</span><span>Grad-CAM AI Explainability</span></div>
+          <div class="auth-feat"><span class="auth-feat-icon">&#128202;</span><span>Real-time Analytics Dashboard</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right panel — auth forms -->
+    <div class="auth-form-panel glass">
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-auth="login" id="auth-tab-login">Sign In</button>
+        <button class="auth-tab" data-auth="register" id="auth-tab-register">Sign Up</button>
+      </div>
+
+      <!-- SIGN IN -->
+      <div class="auth-view active" id="auth-login">
+        <h2 class="auth-title">Welcome Back</h2>
+        <p class="auth-subtitle">Sign in to access the prediction dashboard</p>
+        <div id="login-error" class="alert alert-error hidden"></div>
+        <div id="login-success" class="alert alert-success hidden"></div>
+        <form id="login-form" novalidate>
+          <div class="field-group"><label for="username">Username</label><div class="input-wrap"><span class="input-icon"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 10a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 1114 0H3z"/></svg></span><input id="username" type="text" placeholder="Enter your username" autocomplete="username" required /></div></div>
+          <div class="field-group"><label for="password">Password</label><div class="input-wrap"><span class="input-icon"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg></span><input id="password" type="password" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" autocomplete="current-password" required /></div></div>
+          <div class="auth-options"><label class="checkbox-field"><input type="checkbox" id="remember-me" /><span class="checkmark"></span><span>Remember me</span></label><a href="#" class="auth-link" id="show-forgot">Forgot Password?</a></div>
+          <button type="submit" class="btn btn-gradient btn-full btn-xl" id="login-btn"><span class="btn-text">Sign In</span><span class="btn-loader hidden"></span></button>
+        </form>
+        <div class="auth-divider"><span>or</span></div>
+        <p class="auth-switch">Don't have an account? <a href="#" id="switch-to-register">Create one</a></p>
+      </div>
+
+      <!-- SIGN UP -->
+      <div class="auth-view" id="auth-register">
+        <h2 class="auth-title">Create Account</h2>
+        <p class="auth-subtitle">Register to start using the system</p>
+        <div id="register-error" class="alert alert-error hidden"></div>
+        <div id="register-success" class="alert alert-success hidden"></div>
+        <form id="register-form" novalidate>
+          <div class="field-row"><div class="field-group"><label for="reg-username">Username *</label><div class="input-wrap"><span class="input-icon"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 10a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 1114 0H3z"/></svg></span><input id="reg-username" type="text" placeholder="johndoe" required /></div></div><div class="field-group"><label for="reg-email">Email *</label><div class="input-wrap"><span class="input-icon"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/></svg></span><input id="reg-email" type="email" placeholder="john@example.com" required /></div></div></div>
+          <div class="field-group"><label for="reg-password">Password *</label><div class="input-wrap"><span class="input-icon"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg></span><input id="reg-password" type="password" placeholder="Min 6 characters" required minlength="6" /></div><div class="password-strength" id="password-strength"><div class="strength-bar" id="strength-bar"></div></div><span class="field-range" id="strength-text"></span></div>
+          <div class="field-group"><label for="reg-confirm">Confirm Password *</label><div class="input-wrap"><span class="input-icon"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg></span><input id="reg-confirm" type="password" placeholder="Repeat password" required /></div></div>
+          <div class="field-group"><label for="reg-role">Role</label><select id="reg-role"><option value="doctor">Doctor</option><option value="researcher">Researcher</option><option value="student">Student</option></select></div>
+          <button type="submit" class="btn btn-gradient btn-full btn-xl" id="register-btn"><span class="btn-text">Create Account</span><span class="btn-loader hidden"></span></button>
+        </form>
+        <div class="auth-divider"><span>or</span></div>
+        <p class="auth-switch">Already have an account? <a href="#" id="switch-to-login">Sign In</a></p>
+      </div>
+
+      <!-- FORGOT PASSWORD -->
+      <div class="auth-view" id="auth-forgot">
+        <h2 class="auth-title">Reset Password</h2>
+        <p class="auth-subtitle">Enter your email to recover access</p>
+        <div id="forgot-message" class="alert alert-info hidden"></div>
+        <form id="forgot-form" novalidate>
+          <div class="field-group"><label for="forgot-email">Email Address</label><div class="input-wrap"><span class="input-icon"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/></svg></span><input id="forgot-email" type="email" placeholder="john@example.com" required /></div></div>
+          <button type="submit" class="btn btn-gradient btn-full btn-xl" id="forgot-btn"><span class="btn-text">Send Reset Link</span><span class="btn-loader hidden"></span></button>
+        </form>
+        <div class="auth-divider"><span>or</span></div>
+        <p class="auth-switch"><a href="#" id="back-to-login">&#8592; Back to Sign In</a></p>
+      </div>
+
+      <button class="btn btn-ghost btn-full mt-4" id="back-to-intro">&#8592; Back to Home</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SCREEN 3: MAIN APP
+     ═══════════════════════════════════════════════════════════════ -->
+<div id="app-screen" class="screen hidden">
+  <!-- Sidebar -->
+  <aside class="sidebar glass">
+    <div class="sidebar-brand">
+      <div class="brand-icon-sm pulse-glow">
+        <svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" stroke="url(#g2)" stroke-width="2.5"/><path d="M12 20 Q16 12 20 20 Q24 28 28 20" stroke="url(#g2)" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="20" r="3" fill="url(#g2)"/><defs><linearGradient id="g2" x1="0" y1="0" x2="40" y2="40"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs></svg>
+      </div>
+      <span class="sidebar-brand-text">Stroke Predict</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-tab="predict" id="nav-predict"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span>New Prediction</span></a>
+      <a href="#" class="nav-item" data-tab="history" id="nav-history"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg><span>History</span></a>
+      <a href="#" class="nav-item" data-tab="dashboard" id="nav-dashboard"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/></svg><span>Dashboard</span></a>
+      <a href="#" class="nav-item" data-tab="patients" id="nav-patients"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.97 5.97 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.97 5.97 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/></svg><span>Patients</span></a>
+      <a href="#" class="nav-item" data-tab="model-info" id="nav-model-info"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg><span>Model Info</span></a>
+    </nav>
+    <div class="server-status" id="server-status"><span class="status-dot status-checking"></span><span class="status-text">Checking...</span></div>
+    <div class="sidebar-footer">
+      <div class="user-info"><div class="user-avatar" id="user-avatar">A</div><div><p class="user-name" id="user-display-name">Admin</p><p class="user-role" id="user-role">Doctor</p></div></div>
+      <button class="btn-logout" id="logout-btn" title="Logout"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 011 1v12a1 1 0 11-2 0V4a1 1 0 011-1zm7 9a1 1 0 102 0V9.414l.293.293a1 1 0 001.414-1.414l-2-2a1 1 0 00-1.414 0l-2 2a1 1 0 101.414 1.414L10 9.414V12z" clip-rule="evenodd"/></svg></button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <!-- TAB: Predict -->
+    <section id="tab-predict" class="tab-section active">
+      <div class="page-header"><div><h2>New Stroke Prediction</h2><p>Enter patient details and optionally upload an MRI scan for combined AI analysis</p></div><div class="header-clock" id="header-clock">--:--</div></div>
+      <div class="vitals-bar glass" id="vitals-bar">
+        <div class="vital-indicator" id="vi-age"><span class="vi-label">Age</span><span class="vi-val">--</span></div>
+        <div class="vital-indicator" id="vi-bp"><span class="vi-label">BP</span><span class="vi-val">--/--</span></div>
+        <div class="vital-indicator" id="vi-hr"><span class="vi-label">HR</span><span class="vi-val">--</span></div>
+        <div class="vital-indicator" id="vi-bmi"><span class="vi-label">BMI</span><span class="vi-val">--</span></div>
+        <div class="vital-indicator" id="vi-sugar"><span class="vi-label">Sugar</span><span class="vi-val">--</span></div>
+        <div class="vital-indicator" id="vi-chol"><span class="vi-label">Chol</span><span class="vi-val">--</span></div>
+      </div>
+      <div id="predict-error" class="alert alert-error hidden"></div>
+      <form id="predict-form" novalidate>
+        <div class="grid-2">
+          <div class="card glass animate-in">
+            <div class="card-header"><div class="card-icon icon-blue"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/></svg></div><h3>Patient Information</h3></div>
+            <div class="card-body">
+              <div class="field-row"><div class="field-group"><label for="p-name">Full Name *</label><input id="p-name" name="name" type="text" placeholder="John Doe" required /></div><div class="field-group"><label for="p-age">Age *</label><input id="p-age" name="age" type="number" min="1" max="120" placeholder="65" required /></div></div>
+              <div class="field-group"><label for="p-gender">Gender *</label><select id="p-gender" name="gender" required><option value="">Select gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select></div>
+            </div>
+          </div>
+          <div class="card glass animate-in" style="animation-delay:.1s">
+            <div class="card-header"><div class="card-icon icon-purple"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg></div><h3>MRI Brain Scan <span class="badge badge-optional">Optional</span></h3></div>
+            <div class="card-body">
+              <div class="upload-zone" id="upload-zone"><div class="upload-icon"><svg viewBox="0 0 48 48" fill="none"><rect x="6" y="6" width="36" height="36" rx="8" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4"/><path d="M24 32V16m0 0l-6 6m6-6l6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><p class="upload-text">Drag &amp; drop MRI image here</p><p class="upload-hint">PNG, JPG, JPEG &bull; DL analysis &amp; Grad-CAM</p><button type="button" class="btn btn-outline btn-sm" id="upload-btn">Browse File</button><input type="file" id="scan-file" name="scan_image" accept=".png,.jpg,.jpeg" hidden /></div>
+              <div id="image-preview" class="image-preview hidden"><img id="preview-img" src="" alt="MRI Preview" /><div class="img-overlay"><span class="img-badge">MRI Loaded</span></div><button type="button" class="btn-remove-img" id="remove-img">&#x2715;</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="card glass mt-4 animate-in" style="animation-delay:.2s">
+          <div class="card-header"><div class="card-icon icon-teal"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/></svg></div><h3>Medical Parameters</h3><button type="button" class="btn btn-ghost btn-sm" id="sample-data-btn">Fill Sample Data</button></div>
+          <div class="card-body">
+            <div class="params-grid">
+              <div class="field-group"><label for="p-hr">Heart Rate <span class="unit">(bpm)</span></label><input id="p-hr" name="heart_rate" type="number" min="30" max="220" placeholder="75" required /><span class="field-range">Normal: 60-100</span></div>
+              <div class="field-group"><label for="p-bps">BP Systolic <span class="unit">(mmHg)</span></label><input id="p-bps" name="bp_systolic" type="number" min="60" max="260" placeholder="120" required /><span class="field-range">Normal: &lt;120</span></div>
+              <div class="field-group"><label for="p-bpd">BP Diastolic <span class="unit">(mmHg)</span></label><input id="p-bpd" name="bp_diastolic" type="number" min="40" max="180" placeholder="80" required /><span class="field-range">Normal: &lt;80</span></div>
+              <div class="field-group"><label for="p-bs">Blood Sugar <span class="unit">(mg/dL)</span></label><input id="p-bs" name="blood_sugar" type="number" min="50" max="600" placeholder="100" required /><span class="field-range">Normal: 70-100</span></div>
+              <div class="field-group"><label for="p-chol">Cholesterol <span class="unit">(mg/dL)</span></label><input id="p-chol" name="cholesterol" type="number" min="50" max="600" placeholder="180" required /><span class="field-range">Normal: &lt;200</span></div>
+              <div class="field-group"><label for="p-bmi">BMI <span class="unit">(kg/m&sup2;)</span></label><input id="p-bmi" name="bmi" type="number" min="10" max="80" step="0.1" placeholder="22.5" required /><span class="field-range">Normal: 18.5-24.9</span></div>
+            </div>
+            <div class="toggles-row">
+              <label class="toggle-field"><span class="toggle-label">Smoker</span><input type="checkbox" name="is_smoker" id="p-smoker" class="toggle-input" /><span class="toggle-switch"></span></label>
+              <label class="toggle-field"><span class="toggle-label">Alcoholic</span><input type="checkbox" name="is_alcoholic" id="p-alcoholic" class="toggle-input" /><span class="toggle-switch"></span></label>
+            </div>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-xl btn-full animate-in" id="predict-btn" style="animation-delay:.3s"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.381z" clip-rule="evenodd"/></svg><span class="btn-text">Run AI Prediction</span><span class="btn-loader hidden"></span></button>
+      </form>
+      <div id="progress-wrap" class="progress-wrap hidden"><div class="progress-label" id="progress-label">Analysing...</div><div class="progress-track"><div class="progress-bar" id="progress-bar"></div></div></div>
+      <!-- Results Panel (same as before but cleaner) -->
+      <div id="results-panel" class="results-panel hidden">
+        <div class="results-header"><h3>Prediction Results</h3><div class="results-meta" id="results-patient-name"></div></div>
+        <div class="result-summary glass" id="result-summary">
+          <div class="summary-item"><span class="summary-label">Risk Level</span><span class="risk-badge" id="summary-risk">&#8212;</span></div>
+          <div class="summary-item"><span class="summary-label">Probability</span><span class="summary-value mono" id="summary-prob">0%</span></div>
+          <div class="summary-item"><span class="summary-label">Stage</span><span class="summary-value" id="summary-stage">&#8212;</span></div>
+          <div class="summary-item"><span class="summary-label">ML Score</span><span class="summary-value mono" id="summary-ml">&#8212;</span></div>
+          <div class="summary-item"><span class="summary-label">DL Score</span><span class="summary-value mono" id="summary-dl">&#8212;</span></div>
+        </div>
+        <div class="results-grid">
+          <div class="card glass result-gauge-card"><h4>Stroke Risk Level</h4><div class="gauge-container"><svg class="gauge-svg" viewBox="0 0 200 120"><path class="gauge-track" d="M 20 110 A 90 90 0 0 1 180 110"/><path class="gauge-fill" id="gauge-fill" d="M 20 110 A 90 90 0 0 1 180 110"/><text x="100" y="90" class="gauge-pct" id="gauge-pct">0%</text><text x="100" y="108" class="gauge-label" id="gauge-label">Analysing...</text></svg></div><div class="risk-badge-wrap"><span class="risk-badge" id="risk-badge">&#8212;</span></div></div>
+          <div class="card glass score-breakdown"><h4>Model Breakdown</h4><div class="score-item"><span class="score-label">ML Model (Tabular)</span><div class="score-bar-track"><div class="score-bar" id="ml-bar"></div></div><span class="score-pct mono" id="ml-pct">&#8212;</span></div><div class="score-item"><span class="score-label">DL Model (MRI)</span><div class="score-bar-track"><div class="score-bar bar-purple" id="dl-bar"></div></div><span class="score-pct mono" id="dl-pct">&#8212;</span></div><div class="score-item"><span class="score-label">Combined Score</span><div class="score-bar-track"><div class="score-bar bar-teal" id="combined-bar"></div></div><span class="score-pct mono" id="combined-pct">&#8212;</span></div><h4 class="mt-4">Vital Signs Assessment</h4><div class="health-indicators" id="health-indicators"></div></div>
+        </div>
+        <div id="gradcam-section" class="card glass gradcam-card hidden"><div class="card-header"><div class="card-icon icon-purple"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg></div><h4>Grad-CAM &#8212; AI Focus Heatmap</h4></div><div class="gradcam-images"><div class="gradcam-img-wrap"><p class="img-caption">Original MRI</p><img id="original-img-result" src="" alt="Original MRI" /></div><div class="gradcam-img-wrap"><p class="img-caption">AI Focus Heatmap</p><img id="gradcam-img" src="" alt="Grad-CAM" /><div class="gradcam-loading hidden" id="gradcam-loading"><span class="btn-loader"></span> Generating...</div></div></div><p class="gradcam-note">Red/warm = AI focus areas &bull; Blue/cool = less important</p></div>
+        <div class="card glass" id="feature-importance-card"><div class="card-header"><div class="card-icon icon-blue"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/></svg></div><h4>Key Risk Factors</h4></div><div id="feature-bars" class="feature-bars"></div></div>
+        <div class="card glass recommendations-card"><div class="card-header"><div class="card-icon icon-teal"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg></div><h4>Medical Recommendations</h4></div><ul id="recommendations-list" class="recommendations-list"></ul></div>
+        <div class="results-actions"><button class="btn btn-outline" id="new-prediction-btn">+ New Prediction</button><button class="btn btn-outline" id="print-result-btn">Print</button><button class="btn btn-primary" id="download-report-btn">Download PDF</button></div>
+      </div>
+    </section>
+
+    <!-- TAB: History -->
+    <section id="tab-history" class="tab-section">
+      <div class="page-header"><div><h2>Prediction History</h2><p>Browse all past predictions and their outcomes</p></div><div class="header-filters"><select id="history-filter-risk" class="filter-select"><option value="">All Risks</option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select></div></div>
+      <div class="card glass"><div id="history-loading" class="loading-state"><span class="btn-loader"></span> Loading...</div><table class="data-table hidden" id="history-table"><thead><tr><th>#</th><th>Patient</th><th>Risk</th><th>Score</th><th>Stage</th><th>Date</th><th>MRI</th></tr></thead><tbody id="history-tbody"></tbody></table><div id="history-empty" class="empty-state hidden"><p>No predictions yet. Run your first prediction!</p></div></div>
+    </section>
+
+    <!-- TAB: Dashboard -->
+    <section id="tab-dashboard" class="tab-section">
+      <div class="page-header"><h2>Analytics Dashboard</h2></div>
+      <div class="stats-grid">
+        <div class="stat-card glass stat-animated"><div class="stat-icon icon-blue"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/></svg></div><p class="stat-label">Total Patients</p><p class="stat-value" id="stat-patients-val">&#8212;</p></div>
+        <div class="stat-card glass stat-animated"><div class="stat-icon icon-purple"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><p class="stat-label">Total Predictions</p><p class="stat-value" id="stat-predictions-val">&#8212;</p></div>
+        <div class="stat-card glass stat-animated risk-high"><p class="stat-label">High Risk</p><p class="stat-value" id="stat-high-val">&#8212;</p></div>
+        <div class="stat-card glass stat-animated risk-medium"><p class="stat-label">Medium Risk</p><p class="stat-value" id="stat-medium-val">&#8212;</p></div>
+        <div class="stat-card glass stat-animated risk-low"><p class="stat-label">Low Risk</p><p class="stat-value" id="stat-low-val">&#8212;</p></div>
+      </div>
+      <div class="grid-2 mt-4">
+        <div class="card glass"><div class="card-header"><div class="card-icon icon-purple"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/></svg></div><h4>Risk Distribution</h4></div><div class="card-body donut-wrap"><canvas id="risk-donut" width="220" height="220"></canvas><div id="donut-legend" class="donut-legend"></div></div></div>
+        <div class="card glass"><h3 class="card-title">Recent Predictions</h3><div id="recent-list"></div></div>
+      </div>
+    </section>
+
+    <!-- TAB: Patients -->
+    <section id="tab-patients" class="tab-section">
+      <div class="page-header"><div><h2>Patient Management</h2><p>Search and manage patient records</p></div><div class="header-filters"><div class="search-box"><svg viewBox="0 0 20 20" fill="currentColor" class="search-icon"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg><input type="text" id="patient-search" placeholder="Search patients..." class="search-input" /></div></div></div>
+      <div class="card glass"><div id="patients-loading" class="loading-state"><span class="btn-loader"></span> Loading patients...</div><table class="data-table hidden" id="patients-table"><thead><tr><th>#</th><th>Name</th><th>Age</th><th>Gender</th><th>Predictions</th><th>Registered</th></tr></thead><tbody id="patients-tbody"></tbody></table><div id="patients-empty" class="empty-state hidden"><p>No patients found.</p></div></div>
+    </section>
+
+    <!-- TAB: Model Info -->
+    <section id="tab-model-info" class="tab-section">
+      <div class="page-header"><h2>Model Performance &amp; Info</h2><p>Technical details about the ML and DL models</p></div>
+      <div class="grid-2">
+        <div class="card glass"><div class="card-header"><div class="card-icon icon-blue"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><h4>ML Model (Random Forest)</h4></div><div class="card-body" id="ml-metrics"><div class="loading-state"><span class="btn-loader"></span> Loading...</div></div></div>
+        <div class="card glass"><div class="card-header"><div class="card-icon icon-purple"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M13 7H7v6h6V7z"/><path fill-rule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clip-rule="evenodd"/></svg></div><h4>DL Model (EfficientNetB0)</h4></div><div class="card-body"><div class="metric-grid"><div class="metric-item"><span class="metric-label">Architecture</span><span class="metric-val">EfficientNetB0 + Transfer Learning</span></div><div class="metric-item"><span class="metric-label">Input Size</span><span class="metric-val">224 x 224 RGB</span></div><div class="metric-item"><span class="metric-label">Classes</span><span class="metric-val">Normal / Stroke (Binary)</span></div><div class="metric-item"><span class="metric-label">Training</span><span class="metric-val">Two-phase (Frozen + Fine-tune)</span></div><div class="metric-item"><span class="metric-label">Augmentation</span><span class="metric-val">Flip, Rotation, Zoom, Brightness</span></div><div class="metric-item"><span class="metric-label">Explainability</span><span class="metric-val">Grad-CAM Heatmap</span></div></div></div></div>
+      </div>
+      <div class="card glass mt-4"><div class="card-header"><div class="card-icon icon-teal"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg></div><h4>Feature Importance (ML Model)</h4></div><div id="model-feature-bars" class="feature-bars"></div></div>
+    </section>
+  </main>
+</div>
+
+<script src="app.js"></script>
+</body>
 </html>

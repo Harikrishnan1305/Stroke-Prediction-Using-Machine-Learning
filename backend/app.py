@@ -56,6 +56,55 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+def validate_predict_input(data):
+    """Validate and sanitise prediction input fields. Returns (errors_list, cleaned_data)."""
+    errors = []
+    cleaned = {}
+
+    # Required string fields
+    if not data.get('name', '').strip():
+        errors.append('Patient name is required.')
+    else:
+        cleaned['name'] = data['name'].strip()[:100]
+
+    if data.get('gender', '') not in ('Male', 'Female', 'Other'):
+        errors.append("Gender must be 'Male', 'Female', or 'Other'.")
+    else:
+        cleaned['gender'] = data['gender']
+
+    # Numeric fields with ranges
+    numeric_fields = {
+        'age':          (1,   120,  int,   True),
+        'heart_rate':   (30,  220,  int,   True),
+        'bp_systolic':  (60,  260,  int,   True),
+        'bp_diastolic': (40,  180,  int,   True),
+        'blood_sugar':  (50,  600,  float, True),
+        'cholesterol':  (50,  600,  float, True),
+        'bmi':          (10,  80,   float, True),
+    }
+    for field, (lo, hi, cast, required) in numeric_fields.items():
+        raw = data.get(field)
+        if raw is None or str(raw).strip() == '':
+            if required:
+                errors.append(f'{field} is required.')
+            continue
+        try:
+            val = cast(raw)
+        except (ValueError, TypeError):
+            errors.append(f'{field} must be a valid number.')
+            continue
+        if not (lo <= val <= hi):
+            errors.append(f'{field} must be between {lo} and {hi} (got {val}).')
+        else:
+            cleaned[field] = val
+
+    # Boolean fields
+    cleaned['is_smoker']   = str(data.get('is_smoker',   'false')).lower() in ('true', '1', 'yes')
+    cleaned['is_alcoholic']= str(data.get('is_alcoholic','false')).lower() in ('true', '1', 'yes')
+
+    return errors, cleaned
+
+
 # Initialize database
 with app.app_context():
     db.create_all()
@@ -160,10 +209,20 @@ def get_current_user():
 @app.route('/api/patients', methods=['GET'])
 @jwt_required()
 def get_patients():
-    """Get all patients"""
+    """Get all patients with prediction counts"""
     try:
-        patients = Patient.query.order_by(Patient.created_at.desc()).all()
-        return jsonify([p.to_dict() for p in patients]), 200
+        search = request.args.get('search', '').strip()
+        query = Patient.query
+        if search:
+            query = query.filter(Patient.name.ilike(f'%{search}%'))
+        query = query.order_by(Patient.created_at.desc())
+        patients = query.all()
+        result = []
+        for p in patients:
+            d = p.to_dict()
+            d['prediction_count'] = Prediction.query.filter_by(patient_id=p.id).count()
+            result.append(d)
+        return jsonify({'patients': result}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -231,8 +290,13 @@ def predict_stroke():
         # Get form data
         data = request.form.to_dict()
         print(f"Received data: {data}")  # Debug logging
-        
-        # Create or get patient
+
+        # ── Input validation ──────────────────────────────────────────────
+        errors, validated = validate_predict_input(data)
+        if errors:
+            return jsonify({'error': 'Validation failed', 'details': errors}), 422
+
+        # ── Create or get patient ─────────────────────────────────────────
         patient_id = data.get('patient_id')
         if patient_id:
             patient = Patient.query.get(patient_id)
@@ -240,24 +304,24 @@ def predict_stroke():
                 return jsonify({'error': 'Patient not found'}), 404
         else:
             patient = Patient(
-                name=data['name'],
-                age=int(data['age']),
-                gender=data['gender']
+                name=validated['name'],
+                age=validated['age'],
+                gender=validated['gender']
             )
             db.session.add(patient)
             db.session.flush()
-        
-        # Prepare features for ML model
+
+        # ── Prepare features for ML model ─────────────────────────────────
         features = {
-            'age': int(data['age']),
-            'heart_rate': int(data['heart_rate']),
-            'bp_systolic': int(data['bp_systolic']),
-            'bp_diastolic': int(data['bp_diastolic']),
-            'blood_sugar': float(data['blood_sugar']),
-            'cholesterol': float(data['cholesterol']),
-            'bmi': float(data['bmi']),
-            'is_smoker': data.get('is_smoker', 'false').lower() == 'true',
-            'is_alcoholic': data.get('is_alcoholic', 'false').lower() == 'true'
+            'age':          validated['age'],
+            'heart_rate':   validated['heart_rate'],
+            'bp_systolic':  validated['bp_systolic'],
+            'bp_diastolic': validated['bp_diastolic'],
+            'blood_sugar':  validated['blood_sugar'],
+            'cholesterol':  validated['cholesterol'],
+            'bmi':          validated['bmi'],
+            'is_smoker':    validated['is_smoker'],
+            'is_alcoholic': validated['is_alcoholic']
         }
         
         # ML Prediction
@@ -402,6 +466,8 @@ def get_prediction(prediction_id):
         return jsonify({'error': str(e)}), 500
 
 
+
+
 # ==================== Statistics Routes ====================
 
 @app.route('/api/statistics', methods=['GET'])
@@ -473,6 +539,34 @@ def get_image(filename):
     except Exception as e:
         return jsonify({'error': str(e)}), 404
 
+
+@app.route('/api/predictions/<int:prediction_id>/gradcam', methods=['GET'])
+@jwt_required()
+def get_gradcam(prediction_id):
+    """Return a Grad-CAM heatmap overlay (base64 PNG) for a given prediction."""
+    try:
+        prediction = Prediction.query.get_or_404(prediction_id)
+        if not prediction.scan_image_path:
+            return jsonify({'error': 'No MRI scan attached to this prediction.'}), 404
+
+        if not os.path.exists(prediction.scan_image_path):
+            return jsonify({'error': 'Image file not found on server.'}), 404
+
+        if dl_model.model is None:
+            return jsonify({'error': 'DL model not loaded.'}), 503
+
+        b64_overlay = dl_model.get_gradcam_overlay_base64(prediction.scan_image_path)
+        if b64_overlay is None:
+            return jsonify({'error': 'Could not generate Grad-CAM heatmap.'}), 500
+
+        return jsonify({
+            'prediction_id': prediction_id,
+            'gradcam_image': b64_overlay,   # data:image/png;base64,...
+            'message': 'Grad-CAM heatmap generated successfully'
+        }), 200
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
 
 # ==================== Model Performance & Explainability ====================
 
