@@ -11,62 +11,52 @@
 7. [Frontend Architecture](#frontend-architecture)
 8. [Machine Learning Models](#machine-learning-models)
 9. [Database Schema](#database-schema)
-10. [Deployment](#deployment)
-11. [Security Features](#security-features)
+10. [Security Features](#security-features)
 
 ---
 
 ## Project Overview
 
-**Stroke Prediction Using Machine Learning** is a comprehensive healthcare application that leverages both Machine Learning (ML) and Deep Learning (DL) models to predict the risk of stroke in patients. The system provides medical professionals with:
+**Stroke Prediction Using Machine Learning** is a comprehensive healthcare application that leverages both Machine Learning (ML) and Deep Learning (DL) models to predict the risk of stroke in patients. The system combines structured tabular clinical data with unstructured medical imaging (MRI) into an ensemble prediction model.
 
-- Patient management and history tracking
-- ML and DL-based stroke prediction
-- Patient trend analysis
-- Medical imaging support (CT, MRI, X-ray)
-- PDF report generation
-- User authentication and authorization
-- Real-time performance monitoring
-
-**Target Users:** Healthcare professionals (doctors, medical staff)  
-**Primary Function:** Early detection and risk assessment for stroke prediction
+**Target Users:** Doctors, Medical Staff, and Healthcare Researchers  
+**Primary Function:** Early detection, risk assessment, and clinical decision support for stroke prediction with AI explainability.
 
 ---
 
 ## System Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
-│                      Frontend (React)                        │
-│         (Dashboard, Patient Management, Predictions)         │
+│                 Frontend (Single Page Application)          │
+│        (HTML5, Vanilla JS, CSS3 Glassmorphism UI)           │
 └────────────────────┬────────────────────────────────────────┘
                      │ HTTP/HTTPS
-                     │ REST API
+                     │ REST API / JSON / Multipart
 ┌────────────────────▼────────────────────────────────────────┐
-│             Backend (Flask Python)                           │
+│             Backend (Flask Python)                          │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │ Authentication & Authorization (JWT)                 │   │
-│  │ Rate Limiting & Security                             │   │
+│  │ Rate Limiting (Flask-Limiter)                        │   │
 │  └──────────────────────────────────────────────────────┘   │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │ ML Model Pipeline         │ DL Model Pipeline        │   │
-│  │ - Random Forest          │ - TensorFlow/Keras       │   │
-│  │ - Feature Scaling        │ - Neural Network         │   │
-│  │ - Prediction Engine      │ - Image Analysis         │   │
+│  │ ML Model (scikit-learn)   │ DL Model (Keras/TF)      │   │
+│  │ - Random Forest           │ - EfficientNetB0         │   │
+│  │ - 9 Clinical Parameters   │ - MRI Image Analysis     │   │
 │  └──────────────────────────────────────────────────────┘   │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │ Data Processing & Report Generation                  │   │
-│  │ - PDF Generation (ReportLab)                         │   │
-│  │ - Image Handling                                     │   │
+│  │ - Grad-CAM Generation (OpenCV)                       │   │
+│  │ - PDF Report Generation (ReportLab)                  │   │
 │  └──────────────────────────────────────────────────────┘   │
 └──────┬──────────────────────────┬──────────────────────────┘
        │                          │
 ┌──────▼────────────────┐ ┌──────▼────────────────┐
-│   SQLite/MySQL DB     │ │  Model Storage        │
-│  - Users              │ │  - stroke_dl_model.h5│
-│  - Patients           │ │  - ML Model Files    │
-│  - Predictions        │ │  - Upload Directory  │
-└───────────────────────┘ └──────────────────────┘
+│   SQLite Database     │ │  File System Storage  │
+│  - Users              │ │  - .pkl Models        │
+│  - Patients           │ │  - .keras DL Models   │
+│  - Predictions        │ │  - MRI Uploads        │
+└───────────────────────┘ └───────────────────────┘
 ```
 
 ---
@@ -75,84 +65,57 @@
 
 ### Backend
 
-- **Framework:** Flask 3.0.0
-- **Database:** SQLAlchemy (supports SQLite, MySQL, PostgreSQL)
-- **Authentication:** Flask-JWT-Extended, Flask-Bcrypt
-- **API Utilities:** Flask-CORS, Flask-Limiter
-- **ML Engine:** scikit-learn, TensorFlow/Keras
-- **Data Processing:** pandas, numpy
-- **Visualization:** matplotlib, seaborn
+- **Framework:** Python 3 & Flask
+- **Database ORM:** Flask-SQLAlchemy (SQLite default)
+- **Authentication:** Flask-JWT-Extended, Werkzeug Security
+- **Security & Limits:** Flask-CORS, Flask-Limiter
+- **Machine Learning:** scikit-learn, pandas, numpy
+- **Deep Learning:** TensorFlow / Keras (EfficientNetB0)
+- **Image Processing:** OpenCV (for Grad-CAM generation)
 - **Report Generation:** ReportLab
-- **Task Queue:** Celery, Redis (optional)
-- **Environment:** python-dotenv, 3.11+
+- **Environment Management:** python-dotenv
 
 ### Frontend
 
-- **Framework:** React 18.2.0 with Vite
-- **Routing:** react-router-dom 6.20.0
-- **HTTP Client:** axios 1.6.2
-- **UI Components:** Recharts (charts), Lucide React (icons)
-- **Styling:** Tailwind CSS 3.4.0
-- **Build Tool:** Vite 7.2.1
-
-### Deployment
-
-- **Containerization:** Docker & Docker Compose
-- **Base Images:** node:18-alpine (frontend), python:3.11-slim (backend)
-- **Reverse Proxy:** (Nginx recommended)
+- **Architecture:** Single Page Application (SPA)
+- **Logic:** Vanilla JavaScript (ES6+), Fetch API
+- **Styling:** Vanilla CSS3 (Custom Glassmorphism Design System)
+- **Markup:** Semantic HTML5
+- **Visuals:** HTML Canvas API for charts/animations
 
 ---
 
 ## Project Structure
 
-```
+```text
 stroke-prediction/
 ├── backend/
-│   ├── app.py                 # Main Flask application
-│   ├── models.py              # Database models (User, Patient, Prediction)
-│   ├── ml_model.py            # ML model training & inference
-│   ├── dl_model.py            # Deep Learning model pipeline
-│   ├── pdf_generator.py       # PDF report generation
-│   ├── train_models.py        # Model training scripts
+│   ├── app.py                 # Main Flask REST API application
+│   ├── models.py              # SQLAlchemy database ORM models
+│   ├── ml_model.py            # Random Forest ML model pipeline & logic
+│   ├── dl_model.py            # EfficientNetB0 DL pipeline & Grad-CAM
+│   ├── pdf_generator.py       # PDF clinical report generation
+│   ├── train_models.py        # ML training scripts
+│   ├── train_dl.py            # DL model training scripts
 │   ├── check_data.py          # Data validation utilities
-│   ├── requirements.txt       # Python dependencies
-│   ├── models/                # Trained model files
-│   │   └── stroke_dl_model.h5 # DL model (HDF5 format)
-│   ├── uploads/               # Patient image uploads
-│   │   ├── Normal/
-│   │   └── Stroke/
-│   └── instance/              # Flask instance folder
+│   ├── split_dataset.py       # Utility for splitting MRI datasets
+│   ├── requirements.txt       # Python package dependencies
+│   ├── models/                # Saved trained AI model binaries (.pkl, .keras)
+│   ├── uploads/               # Temporary patient MRI uploads
+│   └── instance/              # SQLite database file directory
 │
 ├── frontend/
-│   ├── src/
-│   │   ├── main.jsx           # React entry point
-│   │   ├── App.jsx            # Root component
-│   │   ├── index.css          # Global styles
-│   │   ├── api.js             # Axios API service
-│   │   ├── AuthContext.jsx    # Authentication context
-│   │   ├── components/
-│   │   │   └── Navbar.jsx     # Navigation component
-│   │   └── pages/
-│   │       ├── Home.jsx
-│   │       ├── Login.jsx
-│   │       ├── Dashboard.jsx
-│   │       ├── Patients.jsx
-│   │       ├── PatientDetails.jsx
-│   │       ├── PatientHistory.jsx
-│   │       ├── PatientTrends.jsx
-│   │       ├── PredictionForm.jsx
-│   │       └── ModelPerformance.jsx
-│   ├── public/                # Static assets
-│   ├── package.json           # npm dependencies
-│   ├── vite.config.js         # Vite configuration
-│   ├── tailwind.config.js     # Tailwind CSS config
-│   └── postcss.config.js      # PostCSS config
+│   ├── index.html             # Main SPA entrypoint (Intro, Auth, Dashboard screens)
+│   ├── style.css              # Custom styling, animations, responsive layouts
+│   └── app.js                 # Frontend application logic and API integration
 │
-├── Dockerfile                 # Multi-stage Docker build
-├── docker-compose.yml         # Docker Compose configuration
-├── start.bat                  # Windows startup script
-└── TECHNICAL_DOCUMENTATION.md # This file
+├── Dockerfile                 # Containerization configuration
+├── docker-compose.yml         # Multi-container orchestration
+├── start.bat                  # Local Windows startup script
+└── README.md                  # Project overview and basic setup
 ```
+
+*(Note: The `frontend/` directory may contain leftover React/Vite configuration files like `package.json` and `tailwind.config.js` from previous iterations, but the application currently operates entirely on the pure Vanilla JS/CSS stack found in `index.html`, `style.css`, and `app.js`.)*
 
 ---
 
@@ -160,1006 +123,160 @@ stroke-prediction/
 
 ### Prerequisites
 
-- Python 3.11+
-- Node.js 18+
-- Docker & Docker Compose (for containerized deployment)
-- Git
+- Python 3.8+
+- Modern Web Browser (Chrome, Firefox, Safari, Edge)
 
-### Local Development Setup
+### Backend Setup
 
-#### 1. Clone and Navigate
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+2. Create and activate a virtual environment:
+   ```bash
+   python -m venv venv
+   venv\Scripts\activate   # Windows
+   # or source venv/bin/activate  # Mac/Linux
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Setup environment variables (create `.env` in `backend/`):
+   ```env
+   SECRET_KEY=your_secure_flask_secret_key
+   JWT_SECRET_KEY=your_secure_jwt_secret_key
+   DATABASE_URL=sqlite:///stroke_prediction.db
+   UPLOAD_FOLDER=uploads
+   MAX_CONTENT_LENGTH=16777216
+   ```
+5. Run the development server:
+   ```bash
+   python app.py
+   ```
+   *The server runs at `http://localhost:5000`. Models will automatically train/load on startup if missing.*
 
-```bash
-cd "C:\Users\krish\projects\Stroke Prediction Using Machine Learning"
-```
+### Frontend Setup
 
-#### 2. Backend Setup
-
-```bash
-cd backend
-
-# Create virtual environment
-python -m venv venv
-
-# Activate virtual environment
-# On Windows:
-venv\Scripts\activate
-# On Unix/macOS:
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Create .env file
-# Copy and configure:
-# SECRET_KEY=your-secret-key
-# JWT_SECRET_KEY=your-jwt-secret
-# DATABASE_URL=sqlite:///stroke_prediction.db
-# UPLOAD_FOLDER=uploads
-# MAX_CONTENT_LENGTH=16777216
-```
-
-#### 3. Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-```
-
-#### 4. Run Application
-
-```bash
-# Terminal 1: Backend
-cd backend
-. venv/Scripts/activate  # or source venv/bin/activate on Unix
-python app.py
-
-# Terminal 2: Frontend
-cd frontend
-npm run dev
-```
-
-**Access Points:**
-
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:5000
-
-### Docker Deployment
-
-```bash
-# Build and run using Docker Compose
-docker-compose up --build
-
-# Access the application
-# Frontend: http://localhost:80
-# Backend: http://localhost:5000
-```
+Since the frontend is built using Vanilla technologies, no build step (like npm/webpack) is required.
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+2. Serve the application:
+   - Run a local static file server, for example: `python -m http.server 8000`
+   - Or open `index.html` using the VS Code "Live Server" extension.
 
 ---
 
 ## Backend API Documentation
 
 ### Base URL
+`http://localhost:5000/api`
 
-```
-http://localhost:5000/api
-```
+*(Note: Most endpoints require a Bearer Token in the `Authorization` header)*
 
 ### Authentication Endpoints
 
-#### Register User
+- **`POST /api/auth/register`**: Register a new user (`doctor` or `admin`). 
+  - *Payload:* `username`, `email`, `password`, `role`
+- **`POST /api/auth/login`**: Authenticate and retrieve JWT token.
+  - *Payload:* `username`, `password`
+- **`GET /api/auth/me`**: Get current authenticated user details.
 
-```
-POST /auth/register
-Content-Type: application/json
+### Patient Endpoints
 
-{
-  "username": "doctor_name",
-  "email": "doctor@hospital.com",
-  "password": "securepassword",
-  "role": "doctor"  // or "admin"
-}
-
-Response (201):
-{
-  "message": "User registered successfully",
-  "user": {
-    "id": 1,
-    "username": "doctor_name",
-    "email": "doctor@hospital.com",
-    "role": "doctor",
-    "created_at": "2026-02-20T10:00:00"
-  }
-}
-```
-
-#### Login
-
-```
-POST /auth/login
-Content-Type: application/json
-Rate Limit: 5 per minute
-
-{
-  "username": "doctor_name",
-  "password": "securepassword"
-}
-
-Response (200):
-{
-  "access_token": "eyJhbGciOiJIUzI1NiIs...",
-  "user": {
-    "id": 1,
-    "username": "doctor_name",
-    "email": "doctor@hospital.com",
-    "role": "doctor",
-    "created_at": "2026-02-20T10:00:00"
-  }
-}
-```
-
-#### Get Current User
-
-```
-GET /auth/me
-Authorization: Bearer {access_token}
-
-Response (200):
-{
-  "id": 1,
-  "username": "doctor_name",
-  "email": "doctor@hospital.com",
-  "role": "doctor",
-  "created_at": "2026-02-20T10:00:00"
-}
-```
-
-### Patient Management Endpoints
-
-#### Get All Patients
-
-```
-GET /patients
-Authorization: Bearer {access_token}
-
-Response (200):
-[
-  {
-    "id": 1,
-    "name": "John Doe",
-    "age": 65,
-    "gender": "M",
-    "email": "john@example.com",
-    "phone": "+1-555-0100",
-    "created_at": "2026-02-20T10:00:00",
-    "updated_at": "2026-02-20T10:00:00"
-  },
-  ...
-]
-```
-
-#### Get Patient by ID
-
-```
-GET /patients/{patient_id}
-Authorization: Bearer {access_token}
-
-Response (200):
-{
-  "id": 1,
-  "name": "John Doe",
-  "age": 65,
-  "gender": "M",
-  "email": "john@example.com",
-  "phone": "+1-555-0100",
-  "created_at": "2026-02-20T10:00:00",
-  "updated_at": "2026-02-20T10:00:00",
-  "predictions": [
-    {
-      "id": 1,
-      "patient_id": 1,
-      "heart_rate": 72.5,
-      "blood_pressure_systolic": 130,
-      "blood_pressure_diastolic": 85,
-      "blood_sugar": 110.5,
-      "cholesterol": 200.0,
-      "bmi": 28.5,
-      "is_smoker": false,
-      "is_alcoholic": false,
-      "ml_prediction": 0.35,
-      "dl_prediction": 0.42,
-      "ensemble_prediction": 0.38,
-      "risk_level": "medium",
-      "created_at": "2026-02-20T10:00:00"
-    }
-  ]
-}
-```
-
-#### Create Patient
-
-```
-POST /patients
-Authorization: Bearer {access_token}
-Content-Type: application/json
-
-{
-  "name": "Jane Smith",
-  "age": 58,
-  "gender": "F",
-  "email": "jane@example.com",
-  "phone": "+1-555-0101"
-}
-
-Response (201):
-{
-  "message": "Patient created successfully",
-  "patient": {
-    "id": 2,
-    "name": "Jane Smith",
-    "age": 58,
-    "gender": "F",
-    "email": "jane@example.com",
-    "phone": "+1-555-0101",
-    "created_at": "2026-02-20T10:30:00",
-    "updated_at": "2026-02-20T10:30:00"
-  }
-}
-```
-
-#### Update Patient
-
-```
-PUT /patients/{patient_id}
-Authorization: Bearer {access_token}
-Content-Type: application/json
-
-{
-  "name": "Jane Smith",
-  "age": 59,
-  "phone": "+1-555-0102"
-}
-
-Response (200):
-{
-  "message": "Patient updated successfully",
-  "patient": {
-    "id": 2,
-    "name": "Jane Smith",
-    "age": 59,
-    "gender": "F",
-    "email": "jane@example.com",
-    "phone": "+1-555-0102",
-    "updated_at": "2026-02-20T10:35:00"
-  }
-}
-```
+- **`GET /api/patients`**: Retrieve list of all patients (supports `?search=` query).
+- **`POST /api/patients`**: Create a new patient record.
+- **`GET /api/patients/<id>`**: Retrieve a specific patient alongside their prediction history.
+- **`GET /api/patients/search`**: Search patients by name (`?q=name`).
+- **`GET /api/patient/<id>/trends`**: Get historical trend data of patient vitals over time.
 
 ### Prediction Endpoints
 
-#### Make Prediction
+- **`POST /api/predict`**: Main endpoint for stroke prediction. 
+  - *Request Type:* `multipart/form-data`
+  - *Fields Needed:* `patient_id` (optional), `name`, `age`, `gender`, `heart_rate`, `bp_systolic`, `bp_diastolic`, `blood_sugar`, `cholesterol`, `bmi`, `is_smoker`, `is_alcoholic`, and optionally `scan_image` (MRI file).
+  - *Process:* Validates inputs, processes tabular data using Random Forest, runs EfficientNetB0 on MRI (if provided), combines predictions via weighted ensemble, generates clinical recommendations, and stores the record in the database.
+- **`GET /api/predictions`**: Fetch paginated prediction history with filters (`risk`, `date`, `patient_id`, `stage`).
+- **`GET /api/predictions/<id>`**: Retrieve explicit details of a single prediction.
+- **`GET /api/predictions/<id>/gradcam`**: Generate and retrieve an AI explainability base64 PNG heatmap image representing the DL model's focus on the MRI scan.
 
-```
-POST /predict/ml
-Authorization: Bearer {access_token}
-Content-Type: application/json
+### Reporting & Analytics
 
-{
-  "patient_id": 1,
-  "heart_rate": 72.5,
-  "blood_pressure_systolic": 130,
-  "blood_pressure_diastolic": 85,
-  "blood_sugar": 110.5,
-  "cholesterol": 200.0,
-  "bmi": 28.5,
-  "is_smoker": false,
-  "is_alcoholic": false
-}
-
-Response (200):
-{
-  "prediction": 0.35,
-  "risk_level": "medium",
-  "confidence": 0.92,
-  "message": "Prediction saved",
-  "prediction_id": 5
-}
-```
-
-#### Deep Learning Prediction (with Image)
-
-```
-POST /predict/dl
-Authorization: Bearer {access_token}
-Content-Type: multipart/form-data
-
-patient_id: 1
-image: <binary_file>  // Medical imaging file (PNG, JPG, DICOM, NII)
-heart_rate: 72.5
-blood_pressure_systolic: 130
-blood_pressure_diastolic: 85
-blood_sugar: 110.5
-cholesterol: 200.0
-bmi: 28.5
-is_smoker: false
-is_alcoholic: false
-
-Response (200):
-{
-  "dl_prediction": 0.42,
-  "ml_prediction": 0.35,
-  "ensemble_prediction": 0.38,
-  "risk_level": "medium",
-  "confidence": 0.89,
-  "image_analysis": "Normal brain activity detected",
-  "prediction_id": 6
-}
-```
-
-#### Ensemble Prediction
-
-```
-POST /predict/ensemble
-Authorization: Bearer {access_token}
-Content-Type: application/json
-
-{
-  "patient_id": 1,
-  "heart_rate": 72.5,
-  "blood_pressure_systolic": 130,
-  "blood_pressure_diastolic": 85,
-  "blood_sugar": 110.5,
-  "cholesterol": 200.0,
-  "bmi": 28.5,
-  "is_smoker": false,
-  "is_alcoholic": false,
-  "use_image": false
-}
-
-Response (200):
-{
-  "ml_prediction": 0.35,
-  "dl_prediction": 0.42,
-  "ensemble_prediction": 0.38,
-  "risk_level": "medium",
-  "overall_confidence": 0.90,
-  "prediction_id": 7
-}
-```
-
-#### Get Prediction History
-
-```
-GET /patients/{patient_id}/predictions
-Authorization: Bearer {access_token}
-
-Response (200):
-[
-  {
-    "id": 1,
-    "patient_id": 1,
-    "heart_rate": 72.5,
-    "blood_pressure_systolic": 130,
-    "blood_pressure_diastolic": 85,
-    "blood_sugar": 110.5,
-    "cholesterol": 200.0,
-    "bmi": 28.5,
-    "is_smoker": false,
-    "is_alcoholic": false,
-    "ml_prediction": 0.35,
-    "dl_prediction": 0.42,
-    "ensemble_prediction": 0.38,
-    "risk_level": "medium",
-    "created_at": "2026-02-20T10:00:00"
-  }
-]
-```
-
-### Report Generation Endpoints
-
-#### Generate PDF Report
-
-```
-GET /report/patient/{patient_id}
-Authorization: Bearer {access_token}
-
-Response (200):
-<PDF binary file>
-Content-Type: application/pdf
-Content-Disposition: attachment; filename="patient_report.pdf"
-```
-
-#### Generate Prediction Report
-
-```
-POST /report/prediction/{prediction_id}
-Authorization: Bearer {access_token}
-
-Response (200):
-<PDF binary file with prediction details>
-```
-
-### Model Information Endpoints
-
-#### Get Model Performance Metrics
-
-```
-GET /models/performance
-Authorization: Bearer {access_token}
-
-Response (200):
-{
-  "ml_model": {
-    "accuracy": 0.87,
-    "precision": 0.85,
-    "recall": 0.89,
-    "f1_score": 0.87,
-    "roc_auc": 0.91,
-    "trained_at": "2026-02-15T12:30:00",
-    "model_type": "Random Forest"
-  },
-  "dl_model": {
-    "accuracy": 0.89,
-    "loss": 0.25,
-    "val_accuracy": 0.87,
-    "trained_at": "2026-02-18T14:45:00",
-    "model_type": "Convolutional Neural Network"
-  }
-}
-```
-
-#### Get Feature Importance
-
-```
-GET /models/feature-importance
-Authorization: Bearer {access_token}
-
-Response (200):
-{
-  "features": [
-    {"name": "blood_pressure_systolic", "importance": 0.25},
-    {"name": "cholesterol", "importance": 0.18},
-    {"name": "age", "importance": 0.15},
-    {"name": "bmi", "importance": 0.12},
-    {"name": "blood_sugar", "importance": 0.11},
-    {"name": "heart_rate", "importance": 0.10},
-    {"name": "is_smoker", "importance": 0.07},
-    {"name": "is_alcoholic", "importance": 0.02}
-  ]
-}
-```
-
-### Error Responses
-
-```
-400 Bad Request
-{
-  "error": "Missing required fields"
-}
-
-401 Unauthorized
-{
-  "error": "Invalid or expired token"
-}
-
-404 Not Found
-{
-  "error": "Resource not found"
-}
-
-429 Too Many Requests
-{
-  "error": "Rate limit exceeded"
-}
-
-500 Internal Server Error
-{
-  "error": "Internal server error"
-}
-```
+- **`GET /api/statistics`**: Returns comprehensive dashboard metrics (total patients, risk distributions, age demographics, etc.).
+- **`GET /api/prediction/<id>/report`**: Generates and downloads a clinical PDF report containing patient vitals, prediction probabilities, and medical recommendations.
+- **`GET /api/model/performance`**: Returns ML model performance metrics, accuracy, and feature importance rankings.
+- **`GET /api/images/<filename>`**: Serve static uploaded MRI images.
 
 ---
 
 ## Frontend Architecture
 
-### Component Hierarchy
+The frontend is a bespoke Single Page Application (SPA) contained entirely within `frontend/app.js`, driven by pure JavaScript state management and DOM manipulation.
 
-```
-App
-├── AuthContext (Provider)
-├── Navbar
-├── Routes
-│   ├── Home
-│   ├── Login
-│   ├── Dashboard
-│   ├── Patients
-│   ├── PatientDetails
-│   ├── PatientHistory
-│   ├── PatientTrends
-│   ├── PredictionForm
-│   └── ModelPerformance
-```
+### Core Structure (`app.js`)
 
-### Key Components
+1. **State Management**: Centralized `state` object handles `user`, `token`, `patients`, `predictions`, `currentPrediction`, `activeTab`.
+2. **API Client**: A customized wrapper around the Fetch API automatically intercepts requests to inject JWT access tokens and parse JSON responses.
+3. **Screen Navigation**: Toggles visibility between `#intro-screen`, `#login-screen`, and `#app-screen` based on authentication state.
+4. **Tab Routing**: The dashboard (`#app-screen`) implements client-side routing between "Predict", "History", "Dashboard", "Patients", and "Model Info" tabs.
+5. **Real-time UX**: Dynamic UI updates including animated counters, fluid progress bars, live form validation, dynamic donut charts using HTML5 Canvas, and seamless DOM updates without full page reloads.
 
-**AuthContext.jsx**
-
-- Manages global authentication state
-- Stores JWT token in localStorage
-- Provides user identity across app
-
-**api.js**
-
-- Centralizes all HTTP requests
-- Handles Authorization headers
-- Token refresh logic
-
-**Navbar.jsx**
-
-- Navigation links
-- User logout
-- Role-based visibility
-
-**Pages:**
-
-- **Home.jsx** - Landing page with system overview
-- **Login.jsx** - User authentication form
-- **Dashboard.jsx** - Main application dashboard with statistics
-- **Patients.jsx** - Patient list and search
-- **PatientDetails.jsx** - Individual patient information
-- **PatientHistory.jsx** - Patient prediction history
-- **PatientTrends.jsx** - Trend analysis with charts
-- **PredictionForm.jsx** - New prediction input form
-- **ModelPerformance.jsx** - ML/DL model metrics
-
-### State Management
-
-- React Context API (Authentication)
-- Component-level state with useState hook
-- API state with useEffect hook
-
-### Data Flow
-
-```
-Frontend Request
-     ↓
-axios (api.js)
-     ↓
-Check/Add JWT Token
-     ↓
-Backend Flask API
-     ↓
-Database Query / ML Prediction
-     ↓
-JSON Response
-     ↓
-React Component Update
-     ↓
-UI Re-render
-```
+### Styling (`style.css`)
+Leverages a Custom CSS Variables (`:root`) design system for consistency. It utilizes extensive glassmorphism (`backdrop-filter: blur`), CSS Grid/Flexbox layouts, and custom keyframe animations.
 
 ---
 
 ## Machine Learning Models
 
-### 1. ML Model (Machine Learning)
+### 1. Tabular Machine Learning (ML) Model
+**Algorithm**: `RandomForestClassifier` (scikit-learn)
+- **Input Parameters (9)**: Age, Heart Rate, BP Systolic, BP Diastolic, Blood Sugar, Cholesterol, BMI, Smoking Status, Alcohol Status.
+- **Preprocessing**: Feature scaling using `StandardScaler`. Categorical conversion for booleans.
+- **Output**: Predicts stroke probability (Float `0.0` - `1.0`). Outputs risk levels (`Low`, `Medium`, `High`) and suggested Stroke Stages.
+- **Explainability**: Capable of outputting global feature importance metrics extracted natively from the Random Forest tree splits.
 
-**File:** `backend/ml_model.py`
+### 2. Deep Learning (DL) Image Model
+**Algorithm**: `EfficientNetB0` Convolutional Neural Network (Keras / TensorFlow)
+- **Input Strategy**: Brain MRI scans scaled to 224x224 RGB images.
+- **Architecture**: Transfer learning from ImageNet applied to the EfficientNetB0 backbone, followed by global average pooling and dense classification layers.
+- **Output**: Binary classification probability (Normal vs. Stroke risk).
+- **Explainability (Grad-CAM)**: Generates Gradient-weighted Class Activation Mapping heatmaps. It calculates the gradients of the target class with respect to the final convolutional feature map to highlight the region of the MRI scan heavily influencing the prediction.
 
-**Algorithm:** Random Forest Ensemble
-
-- **Estimators:** 100 decision trees
-- **Features:** 8 medical parameters
-- **Output:** Probability of stroke (0-1)
-
-**Input Features:**
-
-1. Heart Rate (bpm)
-2. Blood Pressure Systolic (mmHg)
-3. Blood Pressure Diastolic (mmHg)
-4. Blood Sugar (mg/dL)
-5. Cholesterol (mg/dL)
-6. BMI (kg/m²)
-7. Is Smoker (binary)
-8. Is Alcoholic (binary)
-
-**Preprocessing:**
-
-- StandardScaler for normalization
-- Missing value handling
-- Outlier detection
-
-**Training Data:**
-
-- Loaded from healthcare datasets
-- 70-30 train-test split
-- Cross-validation for hyperparameter tuning
-
-**Performance Metrics:**
-
-- Accuracy: ~87%
-- Precision: ~85%
-- Recall: ~89%
-- ROC-AUC: ~0.91
-
-### 2. DL Model (Deep Learning)
-
-**File:** `backend/dl_model.py`
-
-**Architecture:** Convolutional Neural Network (CNN)
-
-- **Input Layer:** Image (224×224×3) + Medical features
-- **Conv Layers:** 3-4 layers with ReLU activation
-- **Pooling:** MaxPooling2D
-- **Dense Layers:** Fully connected with dropout
-- **Output Layer:** Sigmoid (binary classification)
-
-**Supported Image Formats:**
-
-- PNG, JPG, JPEG (2D medical images)
-- DICOM (CT, MRI scans)
-- NII (Brain imaging)
-
-**Framework:** TensorFlow/Keras
-
-**Training:**
-
-- Epochs: 5-50 (configurable)
-- Batch Size: 32
-- Optimizer: Adam
-- Loss: Binary Crossentropy
-
-**Performance:**
-
-- Accuracy: ~89%
-- Validation Accuracy: ~87%
-- Loss: ~0.25
-
-### 3. Ensemble Prediction
-
-**Strategy:** Weighted Average
-
-```
-ensemble_score = 0.5 × ML_score + 0.5 × DL_score
-risk_level = classify(ensemble_score)
-```
-
-**Risk Classification:**
-
-- Low: 0.0 - 0.33
-- Medium: 0.34 - 0.66
-- High: 0.67 - 1.0
-
-### Model Training
-
-**Training Script:** `backend/train_models.py`
-
-```bash
-python train_models.py --ml-data path/to/data.csv --epochs 20 --batch-size 32
-```
+### 3. Ensemble Logic
+When *both* clinical tabular data and an MRI scan are provided, the backend computes an ensemble prediction:
+`Ensemble Probability = (0.4 * ML_Probability) + (0.6 * DL_Probability)`
+*(The DL model is given slightly higher weight when imaging is available)*
 
 ---
 
 ## Database Schema
 
-### Users Table
+Implemented using `Flask-SQLAlchemy` (SQLite default).
 
-```sql
-CREATE TABLE users (
-    id INTEGER PRIMARY KEY,
-    username VARCHAR(80) UNIQUE NOT NULL,
-    email VARCHAR(120) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(20) DEFAULT 'doctor',  -- 'doctor' or 'admin'
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-```
+### 1. `users` Table
+Handles authentication and authorization.
+- `id` (PK), `username` (Unique), `email` (Unique), `password_hash`, `role` (doctor/admin), `created_at`.
 
-### Patients Table
+### 2. `patients` Table
+Stores unique patient profiles.
+- `id` (PK), `name`, `age`, `gender`, `email`, `phone`, `created_at`, `updated_at`.
+- *Relationship*: One-to-Many with `predictions`.
 
-```sql
-CREATE TABLE patients (
-    id INTEGER PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    age INTEGER NOT NULL,
-    gender VARCHAR(10) NOT NULL,
-    email VARCHAR(120),
-    phone VARCHAR(20),
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### Predictions Table
-
-```sql
-CREATE TABLE predictions (
-    id INTEGER PRIMARY KEY,
-    patient_id INTEGER NOT NULL FOREIGN KEY,
-
-    -- Medical Parameters
-    heart_rate FLOAT NOT NULL,
-    blood_pressure_systolic FLOAT NOT NULL,
-    blood_pressure_diastolic FLOAT NOT NULL,
-    blood_sugar FLOAT NOT NULL,
-    cholesterol FLOAT NOT NULL,
-    bmi FLOAT NOT NULL,
-    is_smoker BOOLEAN DEFAULT FALSE,
-    is_alcoholic BOOLEAN DEFAULT FALSE,
-
-    -- Image Data
-    scan_image_path VARCHAR(255),
-
-    -- Predictions
-    ml_prediction FLOAT,
-    dl_prediction FLOAT,
-    ensemble_prediction FLOAT,
-
-    -- Risk Assessment
-    risk_level VARCHAR(20),  -- 'low', 'medium', 'high'
-    confidence FLOAT,
-
-    -- Metadata
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    notes TEXT
-);
-```
-
-### Relationships
-
-```
-User 1 ← → M Predictions (indirectly via Patient)
-Patient 1 ← → M Predictions
-```
-
----
-
-## Deployment
-
-### Docker Deployment
-
-**Dockerfile Structure:**
-
-1. **Frontend Build Stage**
-   - Linux Alpine Node.js 18
-   - npm install and build
-   - Output: optimized static files
-
-2. **Backend Stage**
-   - Python 3.11 Slim
-   - System dependencies (gcc, g++, libgomp1)
-   - Python packages installation
-   - Model loading
-
-### Docker Compose
-
-```yaml
-services:
-  backend:
-    build: .
-    ports:
-      - "5000:5000"
-    environment:
-      - DATABASE_URL=sqlite:///stroke_prediction.db
-      - SECRET_KEY=your-secret-key
-      - JWT_SECRET_KEY=your-jwt-secret
-    volumes:
-      - ./backend/uploads:/app/uploads
-
-  frontend:
-    build: .
-    ports:
-      - "80:3000"
-    depends_on:
-      - backend
-```
-
-### Environment Variables
-
-**Backend (.env)**
-
-```
-FLASK_ENV=production
-SECRET_KEY=your-production-secret-key
-JWT_SECRET_KEY=your-jwt-secret-key
-DATABASE_URL=sqlite:///stroke_prediction.db
-# Or for MySQL:
-# DATABASE_URL=mysql+pymysql://user:password@localhost/stroke_db
-UPLOAD_FOLDER=uploads
-MAX_CONTENT_LENGTH=16777216
-```
-
-### Production Recommendations
-
-1. **Use proper database** (MySQL/PostgreSQL instead of SQLite)
-2. **Configure Nginx reverse proxy** for static file serving
-3. **Enable HTTPS/SSL** with Let's Encrypt
-4. **Set strong SECRET_KEY** values
-5. **Implement logging** with ELK stack or Datadog
-6. **Add monitoring** with Prometheus/Grafana
-7. **Use environment-specific configs**
-8. **Enable Redis** for caching and Celery task queue
-9. **Implement backup strategy** for database and uploads
-10. **Use CI/CD pipeline** (GitHub Actions, GitLab CI)
-
-### Azure Deployment
-
-### AWS Deployment
-
-### Kubernetes Deployment
+### 3. `predictions` Table
+Stores historical prediction records, inputs, and results.
+- `id` (PK), `patient_id` (FK) -> `patients.id`.
+- **Inputs**: `heart_rate`, `blood_pressure_systolic`, `blood_pressure_diastolic`, `blood_sugar`, `cholesterol`, `bmi`, `is_smoker`, `is_alcoholic`, `scan_image_path`.
+- **Outputs**: `stroke_risk`, `stroke_stage`, `risk_probability`, `ml_prediction`, `dl_prediction`, `recommendations`.
+- **Metadata**: `created_at`, `created_by` (FK) -> `users.id`.
 
 ---
 
 ## Security Features
 
-### Authentication & Authorization
-
-- **JWT Tokens** with 24-hour expiration
-- **Password Hashing** using bcrypt
-- **Role-Based Access Control** (doctor, admin)
-- **Rate Limiting** (200 requests/day, 50/hour per IP)
-
-### Data Protection
-
-- **CORS** enabled for safe cross-origin requests
-- **CSRF Protection** via Flask configuration
-- **Secure file upload** with validation
-  - Allowed extensions: png, jpg, jpeg, dcm, nii
-  - Max file size: 16MB configurable
-- **Input validation** on all endpoints
-
-### Best Practices
-
-1. Never commit `.env` files to version control
-2. Use environment variables for sensitive data
-3. Implement HTTPS in production
-4. Validate and sanitize all user inputs
-5. Use parameterized queries to prevent SQL injection
-6. Implement logging and monitoring
-7. Regular security updates to dependencies
-8. Backup data regularly
-9. Implement API versioning (/api/v1/)
-10. Add request signing for critical operations
-
-### Compliance Considerations
-
-- **HIPAA** (US health data privacy)
-- **GDPR** (EU data protection)
-- **CCPA** (California privacy rights)
-- Patient data encryption at rest and in transit
-- Audit logging for sensitive operations
-- Data retention policies
-
----
-
-## API Rate Limits
-
-| Endpoint            | Limit | Window     |
-| ------------------- | ----- | ---------- |
-| `/auth/login`       | 5     | per minute |
-| All other endpoints | 50    | per hour   |
-| General limit       | 200   | per day    |
-
----
-
-## Common Issues & Troubleshooting
-
-### Backend Issues
-
-**Issue:** TensorFlow/CUDA compatibility
-
-```bash
-# Solution: Use CPU-only version
-pip install tensorflow-cpu
-```
-
-**Issue:** Database locked error
-
-```bash
-# Solution: Delete database and restart
-rm stroke_prediction.db
-python app.py
-```
-
-**Issue:** Port already in use
-
-```bash
-# Solution: Change Flask port
-export FLASK_ENV=production
-flask run --port 5001
-```
-
-### Frontend Issues
-
-**Issue:** CORS errors
-
-```
-# Solution: Check backend CORS configuration
-# Ensure CORS(app) is called in app.py
-```
-
-**Issue:** Node modules size
-
-```bash
-# Solution: Use npm ci instead of npm install
-npm ci
-```
-
-### Docker Issues
-
-**Issue:** Build fails with permission denied
-
-```bash
-# Solution: Run with sudo
-sudo docker-compose up --build
-```
-
----
-
-## Performance Optimization
-
-### Backend
-
-- Enable caching with Redis
-- Use connection pooling for database
-- Batch image processing with Celery
-- Implement pagination for patient lists
-- Use lazy loading for relationships
-
-### Frontend
-
-- Code splitting with React.lazy()
-- Image optimization and lazy loading
-- Browser caching with Service Workers
-- Minify and gzip assets
-- CDN for static files
-
----
-
-## Testing
-
-### Backend Unit Tests
-
-```bash
-python -m pytest tests/
-```
-
-### Frontend Component Tests
-
-```bash
-npm test
-```
-
-### Integration Tests
-
-```bash
-pytest tests/integration/
-```
-
----
-
-## Support & Contact
-
-For technical issues or questions:
-
-- Check documentation first
-- Review error logs in `logs/` directory
-- Check database integrity with `check_data.py`
-- Contact development team
-
----
-
-**Document Version:** 1.0  
-**Last Updated:** February 20, 2026  
-**Maintained By:** Development Team
+1. **Stateless JWT Authentication**: Sessions are managed securely via `Flask-JWT-Extended`.
+2. **Password Hashing**: User passwords are encrypted using `werkzeug.security` (`generate_password_hash` with salting).
+3. **Brute Force Protection**: Implementation of `Flask-Limiter` to restrict repeated attempts on the login (`/api/auth/login`) and predict endpoints.
+4. **Input Sanitization**: Extensive validation rules inside `validate_predict_input` to ensure data boundaries and prevent injection or type-casting errors.
+5. **Secure Uploads**: Utilises `secure_filename()` to store MRI uploads safely and allows only specific file extensions (`png`, `jpg`, `dcm`, `nii`).

@@ -51,17 +51,19 @@ class Patient(db.Model):
     phone = db.Column(db.String(20))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
     
     # Relationship with predictions
     predictions = db.relationship('Prediction', backref='patient', lazy=True, cascade='all, delete-orphan')  # type: ignore
     
-    def __init__(self, name, age, gender, email=None, phone=None, **kwargs):
+    def __init__(self, name, age, gender, email=None, phone=None, created_by=None, **kwargs):
         super(Patient, self).__init__(**kwargs)
         self.name = name
         self.age = age
         self.gender = gender
         self.email = email
         self.phone = phone
+        self.created_by = created_by
     
     def to_dict(self):
         return {

@@ -230,7 +230,7 @@
         <div id="login-error" class="alert alert-error hidden"></div>
         <div id="login-success" class="alert alert-success hidden"></div>
         <form id="login-form" novalidate>
-          <div class="field-group"><label for="username">Username</label><div class="input-wrap"><span class="input-icon"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 10a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 1114 0H3z"/></svg></span><input id="username" type="text" placeholder="Enter your username" autocomplete="username" required /></div></div>
+          <div class="field-group"><label for="username">Username or Email</label><div class="input-wrap"><span class="input-icon"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 10a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 1114 0H3z"/></svg></span><input id="username" type="text" placeholder="Enter username or email" autocomplete="username" required /></div></div>
           <div class="field-group"><label for="password">Password</label><div class="input-wrap"><span class="input-icon"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg></span><input id="password" type="password" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" autocomplete="current-password" required /></div></div>
           <div class="auth-options"><label class="checkbox-field"><input type="checkbox" id="remember-me" /><span class="checkmark"></span><span>Remember me</span></label><a href="#" class="auth-link" id="show-forgot">Forgot Password?</a></div>
           <button type="submit" class="btn btn-gradient btn-full btn-xl" id="login-btn"><span class="btn-text">Sign In</span><span class="btn-loader hidden"></span></button>
@@ -249,7 +249,7 @@
           <div class="field-row"><div class="field-group"><label for="reg-username">Username *</label><div class="input-wrap"><span class="input-icon"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 10a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 1114 0H3z"/></svg></span><input id="reg-username" type="text" placeholder="johndoe" required /></div></div><div class="field-group"><label for="reg-email">Email *</label><div class="input-wrap"><span class="input-icon"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/></svg></span><input id="reg-email" type="email" placeholder="john@example.com" required /></div></div></div>
           <div class="field-group"><label for="reg-password">Password *</label><div class="input-wrap"><span class="input-icon"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg></span><input id="reg-password" type="password" placeholder="Min 6 characters" required minlength="6" /></div><div class="password-strength" id="password-strength"><div class="strength-bar" id="strength-bar"></div></div><span class="field-range" id="strength-text"></span></div>
           <div class="field-group"><label for="reg-confirm">Confirm Password *</label><div class="input-wrap"><span class="input-icon"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg></span><input id="reg-confirm" type="password" placeholder="Repeat password" required /></div></div>
-          <div class="field-group"><label for="reg-role">Role</label><select id="reg-role"><option value="doctor">Doctor</option><option value="researcher">Researcher</option><option value="student">Student</option></select></div>
+          <div class="field-group"><label for="reg-role">Role</label><select id="reg-role"><option value="doctor">Doctor</option><option value="researcher">Researcher</option></select></div>
           <button type="submit" class="btn btn-gradient btn-full btn-xl" id="register-btn"><span class="btn-text">Create Account</span><span class="btn-loader hidden"></span></button>
         </form>
         <div class="auth-divider"><span>or</span></div>
@@ -267,6 +267,21 @@
         </form>
         <div class="auth-divider"><span>or</span></div>
         <p class="auth-switch"><a href="#" id="back-to-login">&#8592; Back to Sign In</a></p>
+      </div>
+
+      <!-- RESET PASSWORD CONFIG (Real Link) -->
+      <div class="auth-view" id="auth-reset">
+        <h2 class="auth-title">Set New Password</h2>
+        <p class="auth-subtitle">Enter your completely new secure password.</p>
+        <div id="reset-error" class="alert alert-error hidden"></div>
+        <div id="reset-success" class="alert alert-success hidden"></div>
+        <form id="reset-form" novalidate>
+          <input type="hidden" id="reset-token" />
+          <div class="field-group"><label for="reset-password">New Password *</label><div class="input-wrap"><span class="input-icon"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg></span><input id="reset-password" type="password" placeholder="Min 6 characters" required minlength="6" /></div></div>
+          <button type="submit" class="btn btn-gradient btn-full btn-xl" id="do-reset-btn"><span class="btn-text">Update Password</span><span class="btn-loader hidden"></span></button>
+        </form>
+        <div class="auth-divider"><span>or</span></div>
+        <p class="auth-switch"><a href="#" id="reset-to-login">&#8592; Back to Sign In</a></p>
       </div>
 
       <button class="btn btn-ghost btn-full mt-4" id="back-to-intro">&#8592; Back to Home</button>

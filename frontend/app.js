@@ -5,10 +5,13 @@ const API = 'http://127.0.0.1:5000/api';
 
 // ── Auth ─────────────────────────────────────────────────────
 const token = {
-  get:     () => localStorage.getItem('sp_token'),
-  set:     t  => localStorage.setItem('sp_token', t),
-  clear:   () => localStorage.removeItem('sp_token'),
-  headers: () => ({ 'Authorization': `Bearer ${token.get()}` })
+  get:     () => localStorage.getItem('sp_token') || sessionStorage.getItem('sp_token'),
+  set:     (t, remember)  => { if (remember) { localStorage.setItem('sp_token', t); sessionStorage.removeItem('sp_token'); } else { sessionStorage.setItem('sp_token', t); localStorage.removeItem('sp_token'); } },
+  clear:   () => { localStorage.removeItem('sp_token'); sessionStorage.removeItem('sp_token'); },
+  headers: () => {
+    const t = localStorage.getItem('sp_token') || sessionStorage.getItem('sp_token');
+    return t ? { 'Authorization': `Bearer ${t}` } : {};
+  }
 };
 
 const $ = (s, c = document) => c.querySelector(s);
@@ -127,7 +130,7 @@ loginForm.addEventListener('submit', async (e) => {
       username: $('#username').value.trim(),
       password: $('#password').value
     });
-    token.set(res.access_token);
+    token.set(res.access_token, $('#remember-me').checked);
     setUserInfo(res.user);
     showScreen('app');
     toast('Welcome back!', 'success');
@@ -188,17 +191,53 @@ $('#reg-password').addEventListener('input', (e) => {
 });
 
 // ═══════════════════════════════════════════════════════════════
-//  FORGOT PASSWORD
+//  FORGOT PASSWORD & RESET PASSWORD
 // ═══════════════════════════════════════════════════════════════
-$('#forgot-form').addEventListener('submit', (e) => {
+$('#forgot-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = $('#forgot-email').value.trim();
   if (!email) return;
   const msg = $('#forgot-message');
-  msg.textContent = `If an account exists for "${email}", a password reset link would be sent. (This feature requires email server configuration.)`;
-  showEl(msg);
-  toast('Reset instructions shown', 'info');
+  const btn = $('#forgot-btn');
+  setLoading(btn, true); showEl(msg, false);
+  try {
+    const res = await api('POST', '/auth/forgot-password', { email });
+    msg.className = 'alert alert-success';
+    msg.innerHTML = `<strong>Success:</strong> ${res.message}<br/>Please check your email inbox to proceed.`;
+    showEl(msg);
+    toast('Secure reset link sent', 'success');
+  } catch (err) {
+    msg.className = 'alert alert-error';
+    msg.textContent = err.message;
+    showEl(msg);
+  } finally {
+    setLoading(btn, false);
+  }
 });
+
+$('#reset-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const pw = $('#reset-password').value;
+  if(pw.length < 6) return toast('Password too short', 'error');
+  const msg = $('#reset-error'), ok = $('#reset-success'), btn = $('#do-reset-btn');
+  setLoading(btn,true); showEl(msg,false); showEl(ok,false);
+  try {
+    const res = await api('POST', '/auth/reset-password', {
+      token: $('#reset-token').value,
+      password: pw
+    });
+    ok.textContent = res.message + " You can now sign in.";
+    showEl(ok);
+    toast('Password updated securely', 'success');
+    $('#reset-form').reset();
+    setTimeout(() => switchAuthView('login'), 2500);
+  } catch(err) {
+    msg.textContent = err.message; showEl(msg);
+  } finally { setLoading(btn,false); }
+});
+
+const elResetLogin = $('#reset-to-login');
+if(elResetLogin) elResetLogin.addEventListener('click', e => { e.preventDefault(); switchAuthView('login'); });
 
 function setUserInfo(u) {
   if (!u) return;
@@ -219,7 +258,11 @@ $('#logout-btn').addEventListener('click', () => {
 // ═══════════════════════════════════════════════════════════════
 async function checkServerStatus() {
   const dot = $('#server-status .status-dot'), txt = $('#server-status .status-text');
-  try { await fetch(`${API}/auth/me`, { headers: token.headers() }); dot.className='status-dot status-online'; txt.textContent='Server Online'; }
+  try { 
+    const res = await fetch(`${API}/health`);
+    if (res.ok) { dot.className='status-dot status-online'; txt.textContent='Server Online'; }
+    else throw new Error('Offline');
+  }
   catch { dot.className='status-dot status-offline'; txt.textContent='Server Offline'; }
 }
 setInterval(checkServerStatus, 30000);
@@ -555,9 +598,19 @@ function setLoading(btn, on) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  AUTO-LOGIN
+//  AUTO-LOGIN & URL PARAMS
 // ═══════════════════════════════════════════════════════════════
 (async () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const resetT = urlParams.get('reset_token');
+  if (resetT) {
+    showScreen('login');
+    switchAuthView('reset');
+    $('#reset-token').value = resetT;
+    window.history.replaceState({}, document.title, window.location.pathname);
+    return;
+  }
+
   if (token.get()) {
     try { const u = await api('GET', '/auth/me'); setUserInfo(u); showScreen('app'); }
     catch { token.clear(); /* stay on intro */ }

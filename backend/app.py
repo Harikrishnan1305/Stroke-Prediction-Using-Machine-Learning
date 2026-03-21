@@ -9,6 +9,8 @@ import os
 import io
 from dotenv import load_dotenv
 from sqlalchemy import desc
+from itsdangerous import URLSafeTimedSerializer
+from flask_mail import Mail, Message
 
 from models import db, User, Patient, Prediction
 from ml_model import StrokeMLModel
@@ -28,10 +30,31 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
 app.config['UPLOAD_FOLDER'] = os.getenv('UPLOAD_FOLDER', 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))
 
+# Mail Config
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'true').lower() in ['true', '1']
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', '')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', '')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', 'noreply@strokepredict.com')
+
 # Initialize extensions
 CORS(app)
 db.init_app(app)
 jwt = JWTManager(app)
+mail = Mail(app)
+
+def get_reset_token(user_id, expires_sec=1800):
+    s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    return s.dumps({'user_id': user_id}, salt='password-reset-salt')
+
+def verify_reset_token(token, expires_sec=1800):
+    s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    try:
+        user_id = s.loads(token, salt='password-reset-salt', max_age=expires_sec)['user_id']
+    except:
+        return None
+    return User.query.get(user_id)
 
 # Rate limiting
 limiter = Limiter(
@@ -172,7 +195,10 @@ def login():
     """User login"""
     try:
         data = request.get_json()
-        user = User.query.filter_by(username=data['username']).first()
+        login_id = data.get('username', '').strip()
+        user = User.query.filter(
+            db.or_(User.username == login_id, User.email == login_id)
+        ).first()
         
         if not user or not user.check_password(data['password']):
             return jsonify({'error': 'Invalid credentials'}), 401
@@ -204,6 +230,60 @@ def get_current_user():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/auth/forgot-password', methods=['POST'])
+def forgot_password():
+    """Reset password (Sends actual email via Flask-Mail)"""
+    try:
+        data = request.get_json()
+        email = data.get('email', '').strip()
+        if not email:
+            return jsonify({'error': 'Email is required'}), 400
+            
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            # Return success anyway to prevent email enumeration
+            return jsonify({'message': 'If the email exists, a reset link has been sent.'}), 200
+            
+        token = get_reset_token(user.id)
+        # Create a reset link that points to the frontend running locally 
+        origin = request.headers.get('Origin', 'http://127.0.0.1:5500')
+        reset_link = f"{origin}/index.html?reset_token={token}"
+        
+        try:
+            msg = Message('Password Reset Request', recipients=[user.email])
+            msg.body = f"To reset your password, visit the following link:\n{reset_link}\n\nIf you did not make this request then simply ignore this email."
+            mail.send(msg)
+        except Exception as mail_err:
+            print("Mail Send Error:", mail_err)
+            return jsonify({'error': 'Failed to send email. Please check your SMTP configuration in .env.'}), 500
+            
+        return jsonify({'message': 'Secure password reset link has been sent to your email.'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/auth/reset-password', methods=['POST'])
+def reset_password():
+    """Verify token and set new password"""
+    try:
+        data = request.get_json()
+        token = data.get('token')
+        new_password = data.get('password')
+        
+        if not token or not new_password:
+            return jsonify({'error': 'Missing token or password'}), 400
+            
+        user = verify_reset_token(token)
+        if not user:
+            return jsonify({'error': 'The reset token is invalid or has expired.'}), 400
+            
+        user.set_password(new_password)
+        db.session.commit()
+        return jsonify({'message': 'Your password has been securely updated!'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 # ==================== Patient Routes ====================
 
 @app.route('/api/patients', methods=['GET'])
@@ -211,8 +291,9 @@ def get_current_user():
 def get_patients():
     """Get all patients with prediction counts"""
     try:
+        user_id = int(get_jwt_identity())
         search = request.args.get('search', '').strip()
-        query = Patient.query
+        query = Patient.query.filter_by(created_by=user_id)
         if search:
             query = query.filter(Patient.name.ilike(f'%{search}%'))
         query = query.order_by(Patient.created_at.desc())
@@ -232,7 +313,10 @@ def get_patients():
 def get_patient(patient_id):
     """Get patient by ID"""
     try:
+        user_id = int(get_jwt_identity())
         patient = Patient.query.get_or_404(patient_id)
+        if patient.created_by and patient.created_by != user_id:
+            return jsonify({'error': 'Unauthorized'}), 403
         patient_data = patient.to_dict()
         patient_data['predictions'] = [p.to_dict() for p in patient.predictions]
         return jsonify(patient_data), 200
@@ -245,13 +329,15 @@ def get_patient(patient_id):
 def create_patient():
     """Create new patient"""
     try:
+        user_id = int(get_jwt_identity())
         data = request.get_json()
         patient = Patient(
             name=data['name'],
             age=data['age'],
             gender=data['gender'],
             email=data.get('email'),
-            phone=data.get('phone')
+            phone=data.get('phone'),
+            created_by=user_id
         )
         db.session.add(patient)
         db.session.commit()
@@ -270,8 +356,9 @@ def create_patient():
 def search_patients():
     """Search patients by name"""
     try:
+        user_id = int(get_jwt_identity())
         query = request.args.get('q', '')
-        patients = Patient.query.filter(Patient.name.ilike(f'%{query}%')).all()  # pyright: ignore[reportGeneralTypeIssues]
+        patients = Patient.query.filter_by(created_by=user_id).filter(Patient.name.ilike(f'%{query}%')).all()  # pyright: ignore[reportGeneralTypeIssues]
         return jsonify([p.to_dict() for p in patients]), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -302,11 +389,14 @@ def predict_stroke():
             patient = Patient.query.get(patient_id)
             if not patient:
                 return jsonify({'error': 'Patient not found'}), 404
+            if patient.created_by and patient.created_by != user_id:
+                return jsonify({'error': 'Unauthorized patient access'}), 403
         else:
             patient = Patient(
                 name=validated['name'],
                 age=validated['age'],
-                gender=validated['gender']
+                gender=validated['gender'],
+                created_by=user_id
             )
             db.session.add(patient)
             db.session.flush()
@@ -406,7 +496,8 @@ def predict_stroke():
 def get_predictions():
     """Get all predictions with filtering"""
     try:
-        query = Prediction.query
+        user_id = int(get_jwt_identity())
+        query = Prediction.query.filter_by(created_by=user_id)
         
         # Filter by risk level
         risk = request.args.get('risk')
@@ -460,7 +551,10 @@ def get_predictions():
 def get_prediction(prediction_id):
     """Get prediction by ID"""
     try:
+        user_id = int(get_jwt_identity())
         prediction = Prediction.query.get_or_404(prediction_id)
+        if prediction.created_by and prediction.created_by != user_id:
+            return jsonify({'error': 'Unauthorized'}), 403
         return jsonify(prediction.to_dict()), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -475,20 +569,21 @@ def get_prediction(prediction_id):
 def get_statistics():
     """Get dashboard statistics with enhanced analytics"""
     try:
-        total_patients = Patient.query.count()
-        total_predictions = Prediction.query.count()
+        user_id = int(get_jwt_identity())
+        total_patients = Patient.query.filter_by(created_by=user_id).count()
+        total_predictions = Prediction.query.filter_by(created_by=user_id).count()
         
-        high_risk = Prediction.query.filter_by(stroke_risk='High').count()
-        medium_risk = Prediction.query.filter_by(stroke_risk='Medium').count()
-        low_risk = Prediction.query.filter_by(stroke_risk='Low').count()
+        high_risk = Prediction.query.filter_by(created_by=user_id, stroke_risk='High').count()
+        medium_risk = Prediction.query.filter_by(created_by=user_id, stroke_risk='Medium').count()
+        low_risk = Prediction.query.filter_by(created_by=user_id, stroke_risk='Low').count()
         
-        recent_predictions = Prediction.query.order_by(Prediction.created_at.desc()).limit(5).all()
+        recent_predictions = Prediction.query.filter_by(created_by=user_id).order_by(Prediction.created_at.desc()).limit(5).all()
         
         # Age distribution analysis
         age_groups = {
             '20-40': 0, '41-60': 0, '61-80': 0, '80+': 0
         }
-        patients = Patient.query.all()
+        patients = Patient.query.filter_by(created_by=user_id).all()
         for p in patients:
             if p.age <= 40:
                 age_groups['20-40'] += 1
@@ -502,7 +597,7 @@ def get_statistics():
         # Risk by gender
         gender_risk = {}
         for gender in ['Male', 'Female', 'Other']:
-            gender_patients = Patient.query.filter_by(gender=gender).all()
+            gender_patients = Patient.query.filter_by(created_by=user_id, gender=gender).all()
             patient_ids = [p.id for p in gender_patients]
             if len(patient_ids) > 0:
                 high = Prediction.query.filter(
@@ -545,7 +640,10 @@ def get_image(filename):
 def get_gradcam(prediction_id):
     """Return a Grad-CAM heatmap overlay (base64 PNG) for a given prediction."""
     try:
+        user_id = int(get_jwt_identity())
         prediction = Prediction.query.get_or_404(prediction_id)
+        if prediction.created_by and prediction.created_by != user_id:
+            return jsonify({'error': 'Unauthorized'}), 403
         if not prediction.scan_image_path:
             return jsonify({'error': 'No MRI scan attached to this prediction.'}), 404
 
@@ -592,8 +690,10 @@ def get_model_performance():
 def compare_models():
     """Compare ML vs DL predictions"""
     try:
+        user_id = int(get_jwt_identity())
         # Get predictions with both ML and DL results
         predictions = Prediction.query.filter(
+            Prediction.created_by == user_id,
             Prediction.ml_prediction != None,  # type: ignore
             Prediction.dl_prediction != None  # type: ignore
         ).limit(100).all()
@@ -619,7 +719,10 @@ def compare_models():
 def get_patient_trends(patient_id):
     """Get patient health parameter trends over time"""
     try:
+        user_id = int(get_jwt_identity())
         patient = Patient.query.get_or_404(patient_id)
+        if patient.created_by and patient.created_by != user_id:
+            return jsonify({'error': 'Unauthorized'}), 403
         predictions = Prediction.query.filter_by(patient_id=patient_id).order_by(Prediction.created_at).all()
         
         trends = {
@@ -656,7 +759,10 @@ def get_patient_trends(patient_id):
 def download_prediction_report(prediction_id):
     """Generate and download PDF report for prediction"""
     try:
+        user_id = int(get_jwt_identity())
         prediction = Prediction.query.get_or_404(prediction_id)
+        if prediction.created_by and prediction.created_by != user_id:
+            return jsonify({'error': 'Unauthorized'}), 403
         patient = prediction.patient
         
         if not patient:
