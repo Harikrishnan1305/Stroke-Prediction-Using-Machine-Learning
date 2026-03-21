@@ -183,6 +183,10 @@ Since the frontend is built using Vanilla technologies, no build step (like npm/
 - **`POST /api/auth/login`**: Authenticate and retrieve JWT token.
   - *Payload:* `username`, `password`
 - **`GET /api/auth/me`**: Get current authenticated user details.
+- **`POST /api/auth/forgot-password`**: Request a password reset link to be sent via email.
+  - *Payload:* `email`
+- **`POST /api/auth/reset-password`**: Verify token and set new password.
+  - *Payload:* `token`, `password`
 
 ### Patient Endpoints
 
@@ -261,7 +265,7 @@ Handles authentication and authorization.
 
 ### 2. `patients` Table
 Stores unique patient profiles.
-- `id` (PK), `name`, `age`, `gender`, `email`, `phone`, `created_at`, `updated_at`.
+- `id` (PK), `name`, `age`, `gender`, `email`, `phone`, `created_at`, `updated_at`, `created_by` (FK) -> `users.id`.
 - *Relationship*: One-to-Many with `predictions`.
 
 ### 3. `predictions` Table

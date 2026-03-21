@@ -84,6 +84,7 @@ Since the frontend uses standard web technologies, there is no build step requir
 
 ### 1. Authentication
 - Register a new account by clicking the "Sign Up" tab on the login screen.
+- Reset your password using the "Forgot Password" functionality if needed.
 - Or use the default administrator credentials:
   - Username: `admin`
   - Password: `admin123`
@@ -156,6 +157,3 @@ This project is open-source and intended for educational and portfolio use.
 
 ---
 *Built with ❤️ for intelligent healthcare solutions.*
-
-
-pass:harikrishnan@994089
