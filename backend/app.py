@@ -1,3 +1,5 @@
+import re
+
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
@@ -9,7 +11,7 @@ import os
 import io
 from dotenv import load_dotenv
 from sqlalchemy import desc
-from itsdangerous import URLSafeTimedSerializer
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from flask_mail import Mail, Message
 
 from models import db, User, Patient, Prediction
@@ -39,7 +41,9 @@ app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', '')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', 'noreply@strokepredict.com')
 
 # Initialize extensions
-CORS(app)
+# Restrict CORS to allowed origins from environment variable
+allowed_origins = os.getenv('CORS_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5500').split(',')
+CORS(app, origins=allowed_origins, supports_credentials=True)
 db.init_app(app)
 jwt = JWTManager(app)
 mail = Mail(app)
@@ -52,9 +56,22 @@ def verify_reset_token(token, expires_sec=1800):
     s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
     try:
         user_id = s.loads(token, salt='password-reset-salt', max_age=expires_sec)['user_id']
-    except:
+    except (SignatureExpired, BadSignature, KeyError, TypeError):
         return None
     return User.query.get(user_id)
+
+
+def validate_password_strength(password):
+    """Enforce minimum password security: >=8 chars, upper, lower, digit."""
+    if not password or len(password) < 8:
+        return 'Password must be at least 8 characters long.'
+    if not re.search(r'[A-Z]', password):
+        return 'Password must contain at least one uppercase letter.'
+    if not re.search(r'[a-z]', password):
+        return 'Password must contain at least one lowercase letter.'
+    if not re.search(r'[0-9]', password):
+        return 'Password must contain at least one digit.'
+    return None
 
 # Rate limiting
 limiter = Limiter(
@@ -133,12 +150,19 @@ with app.app_context():
     db.create_all()
     
     # Create default admin user if not exists
-    if not User.query.filter_by(username='admin').first():
-        admin = User(username='admin', email='admin@stroke.com', role='admin')
-        admin.set_password('admin123')
+    admin_username = os.getenv('ADMIN_USERNAME', 'admin')
+    if not User.query.filter_by(username=admin_username).first():
+        admin_pw = os.getenv('ADMIN_PASSWORD')
+        admin_email = os.getenv('ADMIN_EMAIL', 'admin@stroke.com')
+        if not admin_pw:
+            import secrets
+            admin_pw = secrets.token_urlsafe(16)
+            print(f"WARNING: No ADMIN_PASSWORD in .env. Generated temporary password: {admin_pw}")
+        admin = User(username=admin_username, email=admin_email, role='admin')
+        admin.set_password(admin_pw)
         db.session.add(admin)
         db.session.commit()
-        print("Default admin user created: admin/admin123")
+        print(f"Default admin user created: {admin_username} (password from env var)")
     
     # Load or train models
     if not ml_model.load():
@@ -170,10 +194,16 @@ def register():
         if User.query.filter_by(email=data['email']).first():
             return jsonify({'error': 'Email already exists'}), 400
         
+        # --- Password strength check ---
+        pw_error = validate_password_strength(data.get('password', ''))
+        if pw_error:
+            return jsonify({'error': pw_error}), 400
+        
+        # --- Prevent role escalation: always assign 'doctor' ---
         user = User(
             username=data['username'],
             email=data['email'],
-            role=data.get('role', 'doctor')
+            role='doctor'
         )
         user.set_password(data['password'])
         
@@ -250,8 +280,28 @@ def forgot_password():
         reset_link = f"{origin}/index.html?reset_token={token}"
         
         try:
-            msg = Message('Password Reset Request', recipients=[user.email])
-            msg.body = f"To reset your password, visit the following link:\n{reset_link}\n\nIf you did not make this request then simply ignore this email."
+            msg = Message(
+                'Stroke Prediction System — Password Reset',
+                sender=('Stroke Prediction System', app.config['MAIL_DEFAULT_SENDER']),
+                recipients=[user.email]
+            )
+            msg.html = f"""
+            <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px; background: #0f172a; border-radius: 12px; color: #e2e8f0;">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <h2 style="color: #f59e0b; margin: 0;">🧠 Stroke Prediction System</h2>
+                    <p style="color: #94a3b8; font-size: 13px; margin-top: 4px;">AI-Powered Clinical Decision Support</p>
+                </div>
+                <hr style="border: none; border-top: 1px solid #1e293b; margin: 16px 0;" />
+                <p style="font-size: 15px; line-height: 1.6;">Hello <strong>{user.username}</strong>,</p>
+                <p style="font-size: 15px; line-height: 1.6;">We received a request to reset the password for your account. Click the button below to set a new password:</p>
+                <div style="text-align: center; margin: 28px 0;">
+                    <a href="{reset_link}" style="display: inline-block; padding: 12px 32px; background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">Reset My Password</a>
+                </div>
+                <p style="font-size: 13px; color: #94a3b8; line-height: 1.5;">This link will expire in <strong>30 minutes</strong>. If you did not request a password reset, you can safely ignore this email — your account will remain unchanged.</p>
+                <hr style="border: none; border-top: 1px solid #1e293b; margin: 24px 0;" />
+                <p style="font-size: 12px; color: #475569; text-align: center;">Stroke Prediction System &bull; Secure &bull; Confidential</p>
+            </div>
+            """
             mail.send(msg)
         except Exception as mail_err:
             print("Mail Send Error:", mail_err)
@@ -272,6 +322,11 @@ def reset_password():
         
         if not token or not new_password:
             return jsonify({'error': 'Missing token or password'}), 400
+        
+        # --- Password strength check ---
+        pw_error = validate_password_strength(new_password)
+        if pw_error:
+            return jsonify({'error': pw_error}), 400
             
         user = verify_reset_token(token)
         if not user:
@@ -627,9 +682,15 @@ def get_statistics():
 @app.route('/api/images/<path:filename>', methods=['GET'])
 @jwt_required()
 def get_image(filename):
-    """Serve uploaded images"""
+    """Serve uploaded images (path-traversal safe)"""
     try:
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        upload_dir = os.path.realpath(app.config['UPLOAD_FOLDER'])
+        filepath = os.path.realpath(os.path.join(upload_dir, filename))
+        # Block path traversal — resolved path must stay inside upload dir
+        if not filepath.startswith(upload_dir):
+            return jsonify({'error': 'Invalid file path'}), 403
+        if not os.path.isfile(filepath):
+            return jsonify({'error': 'File not found'}), 404
         return send_file(filepath)
     except Exception as e:
         return jsonify({'error': str(e)}), 404
@@ -807,4 +868,5 @@ def health_check():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    debug_mode = os.getenv('FLASK_DEBUG', 'false').lower() in ('true', '1')
+    app.run(debug=debug_mode, host='0.0.0.0', port=5000)

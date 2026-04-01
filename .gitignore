@@ -1,7 +1,35 @@
-venv/ 
-backend/venv/ 
-__pycache__/ 
-*.pyc 
-backend/venv/ 
-venv/ 
-__pycache__/ 
+# Python
+venv/
+backend/venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment / Secrets
+.env
+.env.local
+.env.production
+
+# Database
+*.db
+instance/
+
+# Uploads (user data — may contain PHI)
+uploads/
+backend/uploads/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Node
+node_modules/
+
+# Build output
+dist/

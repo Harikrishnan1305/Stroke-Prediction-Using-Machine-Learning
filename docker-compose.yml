@@ -6,9 +6,9 @@ services:
     image: postgres:15-alpine
     container_name: stroke_db
     environment:
-      POSTGRES_USER: stroke_user
-      POSTGRES_PASSWORD: stroke_password
-      POSTGRES_DB: stroke_prediction
+      POSTGRES_USER: ${POSTGRES_USER:-stroke_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-stroke_prediction}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -41,10 +41,12 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: stroke_app
+    env_file:
+      - ./backend/.env
     environment:
-      - DATABASE_URL=postgresql://stroke_user:stroke_password@postgres:5432/stroke_prediction
-      - SECRET_KEY=your-secret-key-here-change-in-production
-      - JWT_SECRET_KEY=your-jwt-secret-key-here-change-in-production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-stroke_user}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-stroke_prediction}
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - FLASK_ENV=production
       - UPLOAD_FOLDER=/app/uploads
     ports:

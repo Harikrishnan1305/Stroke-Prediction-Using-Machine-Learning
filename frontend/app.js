@@ -1,7 +1,7 @@
 /* ─── Stroke Prediction System — App v3 ────────────────────── */
 'use strict';
 
-const API = 'http://127.0.0.1:5000/api';
+const API = '/api';
 
 // ── Auth ─────────────────────────────────────────────────────
 const token = {
@@ -107,6 +107,11 @@ function switchAuthView(viewId) {
   $(`#auth-${viewId}`).classList.add('active');
   const tab = $(`[data-auth="${viewId}"]`);
   if (tab) tab.classList.add('active');
+  // Hide tabs on reset/forgot views, show on login/register
+  const authTabs = $('.auth-tabs');
+  if (authTabs) {
+    authTabs.style.display = (viewId === 'reset' || viewId === 'forgot') ? 'none' : '';
+  }
 }
 
 $$('.auth-tab').forEach(tab => tab.addEventListener('click', () => switchAuthView(tab.dataset.auth)));
@@ -226,11 +231,11 @@ $('#reset-form').addEventListener('submit', async (e) => {
       token: $('#reset-token').value,
       password: pw
     });
-    ok.textContent = res.message + " You can now sign in.";
+    ok.textContent = 'Password updated successfully! Redirecting to Sign In...';
     showEl(ok);
-    toast('Password updated securely', 'success');
+    toast('Password updated successfully', 'success');
     $('#reset-form').reset();
-    setTimeout(() => switchAuthView('login'), 2500);
+    setTimeout(() => switchAuthView('login'), 2000);
   } catch(err) {
     msg.textContent = err.message; showEl(msg);
   } finally { setLoading(btn,false); }

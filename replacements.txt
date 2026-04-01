@@ -1,0 +1,13 @@
+# REPLACE THESE VALUES WITH YOUR ACTUAL EXPOSED SECRETS
+# Format: original_secret==>replacement_text
+
+# Example:
+# my_exposed_password123==>***REMOVED***
+# a7f3e2d1c8b5490f6e3a2d1c0b9...==>***REMOVED***
+
+# Put your actual exposed Gmail App Password below:
+your_exposed_gmail_app_password_here==>***REMOVED***
+
+# Put your actual exposed Secret Keys below if they were leaked:
+your_exposed_secret_key_here==>***REMOVED***
+your_exposed_jwt_secret_key_here==>***REMOVED***
